@@ -1,13 +1,16 @@
-# Sample Hardhat Project
+# Decentralized RBAC System
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
+A Decentralized Role-Based Access Control (RBAC) Dashboard built with HTML, CSS, Vanilla JavaScript and ethers.js on Polygon Amoy Testnet.
 
-Try running some of the following tasks:
+## Features
+- Create and manage roles on-chain
+- Create and assign permissions
+- Suspend and revoke user access
+- Verify wallet permissions
+- Live blockchain activity feed
 
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/Lock.js
-```
+## Tech Stack
+- HTML / CSS / JavaScript
+- ethers.js v6
+- Polygon Amoy Testnet
+- MetaMask
