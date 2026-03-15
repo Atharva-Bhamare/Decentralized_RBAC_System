@@ -130,82 +130,21 @@
         </div>
       </div>
 
-      <!-- ── POLICY MANAGEMENT (sub-section) ── -->
-      <div class="sub-section">
-        <div class="section-header">
+      <!-- Next Step Callout -->
+      <div style="margin-top:2rem; padding:1.25rem 1.4rem; background:var(--success-bg); border:1px solid rgba(34,197,94,.2); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+        <div style="display:flex; align-items:flex-start; gap:.75rem;">
+          <i class="fa-solid fa-circle-check" style="color:var(--success); font-size:1rem; margin-top:.15rem; flex-shrink:0;"></i>
           <div>
-            <div class="section-tag">Blockchain Write</div>
-            <h2 class="section-title">Policy Management</h2>
-            <p class="section-desc">Assign permissions to roles to define on-chain access policies.</p>
+            <strong style="font-size:.88rem; color:var(--text-primary);">Next Step: Assign Permissions to Roles</strong>
+            <p style="font-size:.8rem; color:var(--text-secondary); margin-top:.25rem;">
+              Now that your permissions are defined, head over to the <strong>Policy page</strong> to link them to roles on-chain.
+            </p>
           </div>
         </div>
-
-        <div class="two-col">
-          <!-- Assign Permission to Role Form -->
-          <div class="form-card">
-            <div class="form-card-header">
-              <div class="form-card-icon purple"><i class="fa-solid fa-shield-halved"></i></div>
-              <h3>Assign Permission to Role</h3>
-            </div>
-            <div class="form-body">
-              <div class="field-group">
-                <label class="field-label">Select Role <span class="required">*</span></label>
-                <div class="select-wrapper">
-                  <select id="policyRoleSelect" class="field-select" onchange="updatePolicyPreview()">
-                    <option value="">— Select a Role —</option>
-                  </select>
-                  <i class="fa-solid fa-chevron-down select-arrow"></i>
-                </div>
-              </div>
-              <div class="field-group">
-                <label class="field-label">Select Permission <span class="required">*</span></label>
-                <div class="select-wrapper">
-                  <select id="policyPermSelect" class="field-select" onchange="updatePolicyPreview()">
-                    <option value="">— Select a Permission —</option>
-                  </select>
-                  <i class="fa-solid fa-chevron-down select-arrow"></i>
-                </div>
-              </div>
-              <div class="policy-preview" id="policyPreview" style="display:none;">
-                <div class="policy-preview-inner">
-                  <span class="policy-role" id="previewRole">—</span>
-                  <i class="fa-solid fa-arrow-right"></i>
-                  <span class="policy-perm" id="previewPerm">—</span>
-                </div>
-                <p class="policy-preview-label"><i class="fa-solid fa-link"></i> This policy will be written to the blockchain</p>
-              </div>
-              <button class="btn-primary full-width purple-btn" onclick="assignPermissionToRole()" id="assignPermBtn">
-                <i class="fa-solid fa-link"></i>
-                <span>Assign Permission to Role</span>
-                <div class="btn-loader" id="assignPermLoader"></div>
-              </button>
-            </div>
-          </div>
-
-          <!-- How Policies Work -->
-          <div class="info-card">
-            <div class="info-card-header"><i class="fa-solid fa-circle-info"></i><h3>How Policies Work</h3></div>
-            <div class="info-steps">
-              <div class="info-step">
-                <div class="step-num">1</div>
-                <div class="step-text"><strong>Create Roles</strong> — Go to the <a href="roles.html" style="color:var(--primary);font-weight:700;">Roles page</a> and define hospital roles like Doctor, Nurse, Pharmacist.</div>
-              </div>
-              <div class="info-step">
-                <div class="step-num">2</div>
-                <div class="step-text"><strong>Create Permissions</strong> — Define what actions can be performed on resources (done above).</div>
-              </div>
-              <div class="info-step">
-                <div class="step-num">3</div>
-                <div class="step-text"><strong>Assign Policy</strong> — Link a permission to a role here. Stored permanently on-chain.</div>
-              </div>
-              <div class="info-step">
-                <div class="step-num">4</div>
-                <div class="step-text"><strong>Assign Staff</strong> — Go to the <a href="staff.html" style="color:var(--primary);font-weight:700;">Staff page</a> to give a staff wallet a role carrying these permissions.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div><!-- /sub-section -->
+        <a href="policy.html" style="display:inline-flex; align-items:center; gap:.45rem; padding:.55rem 1.1rem; background:linear-gradient(135deg,var(--success),#16a34a); color:white; border-radius:var(--radius-sm); font-size:.82rem; font-weight:700; white-space:nowrap; text-decoration:none; box-shadow:0 4px 14px rgba(34,197,94,.25); transition:all .2s ease;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+          <i class="fa-solid fa-shield-halved"></i> Go to Policy Management
+        </a>
+      </div>
 
     </div><!-- /page-body -->
   </main>
