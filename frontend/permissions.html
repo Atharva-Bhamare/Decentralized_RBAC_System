@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Permissions — Hospital RBAC System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body data-page="permissions">
+
+  <!-- ── NAVBAR ── -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-brand">
+      <div class="nav-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="nav-title">
+        <span class="nav-title-main">Hospital RBAC</span>
+        <span class="nav-title-sub">Access Control System</span>
+      </div>
+    </div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html"       class="nav-link"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a></li>
+      <li><a href="roles.html"       class="nav-link"><i class="fa-solid fa-user-tag"></i><span>Roles</span></a></li>
+      <li><a href="permissions.html" class="nav-link"><i class="fa-solid fa-key"></i><span>Permissions</span></a></li>
+      <li><a href="policy.html"      class="nav-link"><i class="fa-solid fa-shield-halved"></i><span>Policy</span></a></li>
+      <li><a href="staff.html"       class="nav-link"><i class="fa-solid fa-users"></i><span>Staff</span></a></li>
+      <li><a href="access.html"      class="nav-link"><i class="fa-solid fa-lock"></i><span>Access Control</span></a></li>
+      <li><a href="logs.html"        class="nav-link"><i class="fa-solid fa-list-check"></i><span>Activity Logs</span></a></li>
+    </ul>
+    <div class="nav-right">
+      <div class="network-badge"><span class="network-dot"></span><span class="network-label">Polygon Amoy</span></div>
+      <button class="btn-connect" id="connectWalletBtn" onclick="connectWallet()">
+        <i class="fa-solid fa-wallet"></i><span id="connectBtnText">Connect Wallet</span>
+      </button>
+      <div class="wallet-address" id="walletAddress" style="display:none;">
+        <i class="fa-solid fa-circle-check" style="color:var(--success)"></i>
+        <span id="walletAddressText">0x0000...0000</span>
+      </div>
+      <button class="hamburger" id="hamburger" onclick="toggleMobileMenu()"><i class="fa-solid fa-bars"></i></button>
+    </div>
+  </nav>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <div class="toast-icon" id="toastIcon"><i class="fa-solid fa-circle-info"></i></div>
+    <div class="toast-body">
+      <div class="toast-title" id="toastTitle">Notification</div>
+      <div class="toast-msg"   id="toastMsg">...</div>
+    </div>
+    <button class="toast-close" onclick="hideToast()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <main class="main-content">
+
+    <!-- PAGE HERO -->
+    <div class="page-hero">
+      <div class="page-hero-inner">
+        <div class="page-hero-left">
+          <div class="breadcrumb">
+            <a href="index.html">Dashboard</a>
+            <i class="fa-solid fa-chevron-right"></i>
+            <span style="color:rgba(255,255,255,.7)">Permission Management</span>
+          </div>
+          <div class="page-hero-tag"><i class="fa-solid fa-key"></i> Blockchain Write</div>
+          <h1 class="page-hero-title">Permission <span>Management</span></h1>
+          <p class="page-hero-sub">Define granular access permissions for hospital resources like patient records, lab reports, and prescriptions.</p>
+        </div>
+        <div class="page-hero-icon"><i class="fa-solid fa-key"></i></div>
+      </div>
+    </div>
+
+    <!-- PAGE BODY -->
+    <div class="page-body fade-in">
+
+      <div class="section-header">
+        <div>
+          <div class="section-tag">Blockchain Write</div>
+          <h2 class="section-title">Create Permissions</h2>
+          <p class="section-desc">Define granular permissions that can be assigned to roles through policies.</p>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <!-- Create Permission Form -->
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-icon green"><i class="fa-solid fa-plus"></i></div>
+            <h3>Create New Permission</h3>
+          </div>
+          <div class="form-body">
+            <div class="field-group">
+              <label class="field-label">Permission Name <span class="required">*</span></label>
+              <input type="text" id="permNameInput" class="field-input" placeholder="e.g. View Patient Records" autocomplete="off"/>
+              <p class="field-hint">Quick suggestions — click to fill:</p>
+              <div class="chip-suggestions">
+                <span class="chip" onclick="fillInput('permNameInput','View Patient Records')"><i class="fa-solid fa-eye"></i> View Records</span>
+                <span class="chip" onclick="fillInput('permNameInput','Edit Patient Records')"><i class="fa-solid fa-pen-to-square"></i> Edit Records</span>
+                <span class="chip" onclick="fillInput('permNameInput','Upload Lab Reports')"><i class="fa-solid fa-upload"></i> Upload Labs</span>
+                <span class="chip" onclick="fillInput('permNameInput','View Lab Reports')"><i class="fa-solid fa-microscope"></i> View Labs</span>
+                <span class="chip" onclick="fillInput('permNameInput','Issue Prescription')"><i class="fa-solid fa-prescription"></i> Prescriptions</span>
+                <span class="chip" onclick="fillInput('permNameInput','Access Billing Information')"><i class="fa-solid fa-file-invoice-dollar"></i> Billing</span>
+              </div>
+            </div>
+            <button class="btn-primary full-width green-btn" onclick="createPermission()" id="createPermBtn">
+              <i class="fa-solid fa-circle-plus"></i>
+              <span>Create Permission</span>
+              <div class="btn-loader" id="createPermLoader"></div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Existing Permissions Table -->
+        <div class="list-card">
+          <div class="list-card-header">
+            <h3><i class="fa-solid fa-list"></i> Existing Permissions</h3>
+            <span class="badge badge-green" id="permsListCount">0</span>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead><tr><th>ID</th><th>Permission Name</th><th>Status</th></tr></thead>
+              <tbody id="permsTableBody">
+                <tr><td colspan="3" class="table-empty"><i class="fa-solid fa-circle-info"></i> Connect wallet to load permissions.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── POLICY MANAGEMENT (sub-section) ── -->
+      <div class="sub-section">
+        <div class="section-header">
+          <div>
+            <div class="section-tag">Blockchain Write</div>
+            <h2 class="section-title">Policy Management</h2>
+            <p class="section-desc">Assign permissions to roles to define on-chain access policies.</p>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <!-- Assign Permission to Role Form -->
+          <div class="form-card">
+            <div class="form-card-header">
+              <div class="form-card-icon purple"><i class="fa-solid fa-shield-halved"></i></div>
+              <h3>Assign Permission to Role</h3>
+            </div>
+            <div class="form-body">
+              <div class="field-group">
+                <label class="field-label">Select Role <span class="required">*</span></label>
+                <div class="select-wrapper">
+                  <select id="policyRoleSelect" class="field-select" onchange="updatePolicyPreview()">
+                    <option value="">— Select a Role —</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down select-arrow"></i>
+                </div>
+              </div>
+              <div class="field-group">
+                <label class="field-label">Select Permission <span class="required">*</span></label>
+                <div class="select-wrapper">
+                  <select id="policyPermSelect" class="field-select" onchange="updatePolicyPreview()">
+                    <option value="">— Select a Permission —</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down select-arrow"></i>
+                </div>
+              </div>
+              <div class="policy-preview" id="policyPreview" style="display:none;">
+                <div class="policy-preview-inner">
+                  <span class="policy-role" id="previewRole">—</span>
+                  <i class="fa-solid fa-arrow-right"></i>
+                  <span class="policy-perm" id="previewPerm">—</span>
+                </div>
+                <p class="policy-preview-label"><i class="fa-solid fa-link"></i> This policy will be written to the blockchain</p>
+              </div>
+              <button class="btn-primary full-width purple-btn" onclick="assignPermissionToRole()" id="assignPermBtn">
+                <i class="fa-solid fa-link"></i>
+                <span>Assign Permission to Role</span>
+                <div class="btn-loader" id="assignPermLoader"></div>
+              </button>
+            </div>
+          </div>
+
+          <!-- How Policies Work -->
+          <div class="info-card">
+            <div class="info-card-header"><i class="fa-solid fa-circle-info"></i><h3>How Policies Work</h3></div>
+            <div class="info-steps">
+              <div class="info-step">
+                <div class="step-num">1</div>
+                <div class="step-text"><strong>Create Roles</strong> — Go to the <a href="roles.html" style="color:var(--primary);font-weight:700;">Roles page</a> and define hospital roles like Doctor, Nurse, Pharmacist.</div>
+              </div>
+              <div class="info-step">
+                <div class="step-num">2</div>
+                <div class="step-text"><strong>Create Permissions</strong> — Define what actions can be performed on resources (done above).</div>
+              </div>
+              <div class="info-step">
+                <div class="step-num">3</div>
+                <div class="step-text"><strong>Assign Policy</strong> — Link a permission to a role here. Stored permanently on-chain.</div>
+              </div>
+              <div class="info-step">
+                <div class="step-num">4</div>
+                <div class="step-text"><strong>Assign Staff</strong> — Go to the <a href="staff.html" style="color:var(--primary);font-weight:700;">Staff page</a> to give a staff wallet a role carrying these permissions.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /sub-section -->
+
+    </div><!-- /page-body -->
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand"><i class="fa-solid fa-shield-halved"></i><span>Hospital RBAC System</span></div>
+      <div class="footer-info">
+        <span>Contract: <code class="footer-addr">0xc00F4d45936e0537D606Bc65cC0E8d2C052aC553</code></span>
+        <span class="footer-sep">·</span><span>Polygon Amoy Testnet</span>
+        <span class="footer-sep">·</span><span>Chain ID: 80002</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

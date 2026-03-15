@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Roles — Hospital RBAC System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body data-page="roles">
+
+  <!-- ── NAVBAR ── -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-brand">
+      <div class="nav-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="nav-title">
+        <span class="nav-title-main">Hospital RBAC</span>
+        <span class="nav-title-sub">Access Control System</span>
+      </div>
+    </div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html"       class="nav-link"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a></li>
+      <li><a href="roles.html"       class="nav-link"><i class="fa-solid fa-user-tag"></i><span>Roles</span></a></li>
+      <li><a href="permissions.html" class="nav-link"><i class="fa-solid fa-key"></i><span>Permissions</span></a></li>
+      <li><a href="policy.html"      class="nav-link"><i class="fa-solid fa-shield-halved"></i><span>Policy</span></a></li>
+      <li><a href="staff.html"       class="nav-link"><i class="fa-solid fa-users"></i><span>Staff</span></a></li>
+      <li><a href="access.html"      class="nav-link"><i class="fa-solid fa-lock"></i><span>Access Control</span></a></li>
+      <li><a href="logs.html"        class="nav-link"><i class="fa-solid fa-list-check"></i><span>Activity Logs</span></a></li>
+    </ul>
+    <div class="nav-right">
+      <div class="network-badge"><span class="network-dot"></span><span class="network-label">Polygon Amoy</span></div>
+      <button class="btn-connect" id="connectWalletBtn" onclick="connectWallet()">
+        <i class="fa-solid fa-wallet"></i><span id="connectBtnText">Connect Wallet</span>
+      </button>
+      <div class="wallet-address" id="walletAddress" style="display:none;">
+        <i class="fa-solid fa-circle-check" style="color:var(--success)"></i>
+        <span id="walletAddressText">0x0000...0000</span>
+      </div>
+      <button class="hamburger" id="hamburger" onclick="toggleMobileMenu()"><i class="fa-solid fa-bars"></i></button>
+    </div>
+  </nav>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <div class="toast-icon" id="toastIcon"><i class="fa-solid fa-circle-info"></i></div>
+    <div class="toast-body">
+      <div class="toast-title" id="toastTitle">Notification</div>
+      <div class="toast-msg"   id="toastMsg">...</div>
+    </div>
+    <button class="toast-close" onclick="hideToast()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <main class="main-content">
+
+    <!-- PAGE HERO -->
+    <div class="page-hero">
+      <div class="page-hero-inner">
+        <div class="page-hero-left">
+          <div class="breadcrumb">
+            <a href="index.html">Dashboard</a>
+            <i class="fa-solid fa-chevron-right"></i>
+            <span style="color:rgba(255,255,255,.7)">Role Management</span>
+          </div>
+          <div class="page-hero-tag"><i class="fa-solid fa-user-tag"></i> Blockchain Write</div>
+          <h1 class="page-hero-title">Role <span>Management</span></h1>
+          <p class="page-hero-sub">Create hospital staff roles on-chain and assign permissions through policies.</p>
+        </div>
+        <div class="page-hero-icon"><i class="fa-solid fa-user-tag"></i></div>
+      </div>
+    </div>
+
+    <!-- PAGE BODY -->
+    <div class="page-body fade-in">
+
+      <!-- ── ROLE MANAGEMENT ── -->
+      <div class="section-header">
+        <div>
+          <div class="section-tag">Blockchain Write</div>
+          <h2 class="section-title">Create Roles</h2>
+          <p class="section-desc">Define the hospital roles that will be assigned to staff members.</p>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <!-- Create Role Form -->
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-icon blue"><i class="fa-solid fa-plus"></i></div>
+            <h3>Create New Role</h3>
+          </div>
+          <div class="form-body">
+            <div class="field-group">
+              <label class="field-label">Role Name <span class="required">*</span></label>
+              <input type="text" id="roleNameInput" class="field-input" placeholder="e.g. Doctor, Nurse, Pharmacist" autocomplete="off"/>
+              <p class="field-hint">Quick suggestions — click to fill:</p>
+              <div class="chip-suggestions">
+                <span class="chip" onclick="fillInput('roleNameInput','Doctor')"><i class="fa-solid fa-user-doctor"></i> Doctor</span>
+                <span class="chip" onclick="fillInput('roleNameInput','Nurse')"><i class="fa-solid fa-user-nurse"></i> Nurse</span>
+                <span class="chip" onclick="fillInput('roleNameInput','Pharmacist')"><i class="fa-solid fa-pills"></i> Pharmacist</span>
+                <span class="chip" onclick="fillInput('roleNameInput','Lab Technician')"><i class="fa-solid fa-flask"></i> Lab Tech</span>
+                <span class="chip" onclick="fillInput('roleNameInput','Hospital Admin')"><i class="fa-solid fa-hospital-user"></i> Admin</span>
+                <span class="chip" onclick="fillInput('roleNameInput','Receptionist')"><i class="fa-solid fa-phone"></i> Receptionist</span>
+              </div>
+            </div>
+            <button class="btn-primary full-width" onclick="createRole()" id="createRoleBtn">
+              <i class="fa-solid fa-circle-plus"></i>
+              <span>Create Role</span>
+              <div class="btn-loader" id="createRoleLoader"></div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Existing Roles Table -->
+        <div class="list-card">
+          <div class="list-card-header">
+            <h3><i class="fa-solid fa-list"></i> Existing Roles</h3>
+            <span class="badge badge-blue" id="rolesListCount">0</span>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead><tr><th>ID</th><th>Role Name</th><th>Status</th></tr></thead>
+              <tbody id="rolesTableBody">
+                <tr><td colspan="3" class="table-empty"><i class="fa-solid fa-circle-info"></i> Connect wallet to load roles.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-body -->
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand"><i class="fa-solid fa-shield-halved"></i><span>Hospital RBAC System</span></div>
+      <div class="footer-info">
+        <span>Contract: <code class="footer-addr">0xc00F4d45936e0537D606Bc65cC0E8d2C052aC553</code></span>
+        <span class="footer-sep">·</span><span>Polygon Amoy Testnet</span>
+        <span class="footer-sep">·</span><span>Chain ID: 80002</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

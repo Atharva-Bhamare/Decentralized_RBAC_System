@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Activity Logs — Hospital RBAC System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body data-page="logs">
+
+  <!-- ── NAVBAR ── -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-brand">
+      <div class="nav-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="nav-title">
+        <span class="nav-title-main">Hospital RBAC</span>
+        <span class="nav-title-sub">Access Control System</span>
+      </div>
+    </div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html"       class="nav-link"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a></li>
+      <li><a href="roles.html"       class="nav-link"><i class="fa-solid fa-user-tag"></i><span>Roles</span></a></li>
+      <li><a href="permissions.html" class="nav-link"><i class="fa-solid fa-key"></i><span>Permissions</span></a></li>
+      <li><a href="policy.html"      class="nav-link"><i class="fa-solid fa-shield-halved"></i><span>Policy</span></a></li>
+      <li><a href="staff.html"       class="nav-link"><i class="fa-solid fa-users"></i><span>Staff</span></a></li>
+      <li><a href="access.html"      class="nav-link"><i class="fa-solid fa-lock"></i><span>Access Control</span></a></li>
+      <li><a href="logs.html"        class="nav-link"><i class="fa-solid fa-list-check"></i><span>Activity Logs</span></a></li>
+    </ul>
+    <div class="nav-right">
+      <div class="network-badge"><span class="network-dot"></span><span class="network-label">Polygon Amoy</span></div>
+      <button class="btn-connect" id="connectWalletBtn" onclick="connectWallet()">
+        <i class="fa-solid fa-wallet"></i><span id="connectBtnText">Connect Wallet</span>
+      </button>
+      <div class="wallet-address" id="walletAddress" style="display:none;">
+        <i class="fa-solid fa-circle-check" style="color:var(--success)"></i>
+        <span id="walletAddressText">0x0000...0000</span>
+      </div>
+      <button class="hamburger" id="hamburger" onclick="toggleMobileMenu()"><i class="fa-solid fa-bars"></i></button>
+    </div>
+  </nav>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <div class="toast-icon" id="toastIcon"><i class="fa-solid fa-circle-info"></i></div>
+    <div class="toast-body">
+      <div class="toast-title" id="toastTitle">Notification</div>
+      <div class="toast-msg"   id="toastMsg">...</div>
+    </div>
+    <button class="toast-close" onclick="hideToast()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <main class="main-content">
+
+    <!-- PAGE HERO -->
+    <div class="page-hero">
+      <div class="page-hero-inner">
+        <div class="page-hero-left">
+          <div class="breadcrumb">
+            <a href="index.html">Dashboard</a>
+            <i class="fa-solid fa-chevron-right"></i>
+            <span style="color:rgba(255,255,255,.7)">Activity Logs</span>
+          </div>
+          <div class="page-hero-tag"><i class="fa-solid fa-tower-broadcast"></i> Blockchain Events</div>
+          <h1 class="page-hero-title">Activity <span>Logs</span></h1>
+          <p class="page-hero-sub">Real-time event feed from the smart contract. All transactions across roles, permissions, staff management and access checks are recorded here.</p>
+        </div>
+        <div class="page-hero-icon"><i class="fa-solid fa-list-check"></i></div>
+      </div>
+    </div>
+
+    <!-- PAGE BODY -->
+    <div class="page-body fade-in">
+
+      <div class="section-header">
+        <div>
+          <div class="section-tag">Live Event Feed</div>
+          <h2 class="section-title">Blockchain Activity</h2>
+          <p class="section-desc">All on-chain events emitted by the RBAC smart contract, persisted across page navigations.</p>
+        </div>
+        <button class="btn-secondary" onclick="clearLogs()">
+          <i class="fa-solid fa-trash-can"></i> Clear Logs
+        </button>
+      </div>
+
+      <!-- Filter tabs -->
+      <div class="log-filters">
+        <button class="log-filter active" onclick="filterLogs('all', this)">
+          <i class="fa-solid fa-layer-group"></i> All Events
+        </button>
+        <button class="log-filter" onclick="filterLogs('role', this)">
+          <i class="fa-solid fa-user-tag"></i> Roles
+        </button>
+        <button class="log-filter" onclick="filterLogs('permission', this)">
+          <i class="fa-solid fa-key"></i> Permissions
+        </button>
+        <button class="log-filter" onclick="filterLogs('staff', this)">
+          <i class="fa-solid fa-users"></i> Staff
+        </button>
+        <button class="log-filter" onclick="filterLogs('access', this)">
+          <i class="fa-solid fa-lock"></i> Access
+        </button>
+      </div>
+
+      <!-- Log feed -->
+      <div class="logs-container">
+        <div class="logs-empty" id="logsEmpty">
+          <div class="logs-empty-icon"><i class="fa-solid fa-tower-broadcast"></i></div>
+          <h4>No activity logged yet</h4>
+          <p>Activity entries from all pages appear here automatically. Connect your wallet and start using the system to see events.</p>
+        </div>
+        <div class="timeline" id="timeline"></div>
+      </div>
+
+    </div><!-- /page-body -->
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand"><i class="fa-solid fa-shield-halved"></i><span>Hospital RBAC System</span></div>
+      <div class="footer-info">
+        <span>Contract: <code class="footer-addr">0xc00F4d45936e0537D606Bc65cC0E8d2C052aC553</code></span>
+        <span class="footer-sep">·</span><span>Polygon Amoy Testnet</span>
+        <span class="footer-sep">·</span><span>Chain ID: 80002</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

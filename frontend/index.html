@@ -1,535 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RBACchain — Decentralized Access Control</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — Hospital RBAC System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css"/>
 </head>
-<body>
+<body data-page="dashboard">
 
-  <!-- ═══════════════════════════════════════ NAVBAR ════ -->
+  <!-- ── NAVBAR ── -->
   <nav class="navbar" id="navbar">
-
-    <!-- Brand -->
     <div class="nav-brand">
-      <div class="brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
-      <span class="brand-text">RBAC<span class="brand-accent">chain</span></span>
+      <div class="nav-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="nav-title">
+        <span class="nav-title-main">Hospital RBAC</span>
+        <span class="nav-title-sub">Access Control System</span>
+      </div>
     </div>
-
-    <!-- Nav Links (centre) -->
-    <div class="nav-links" id="navLinks">
-      <a class="nav-link active" data-page="dashboard">
-        <i class="fa-solid fa-gauge-high"></i><span>Dashboard</span>
-      </a>
-      <a class="nav-link" data-page="roles">
-        <i class="fa-solid fa-shield-virus"></i><span>Roles</span>
-      </a>
-      <a class="nav-link" data-page="permissions">
-        <i class="fa-solid fa-key"></i><span>Permissions</span>
-      </a>
-      <a class="nav-link" data-page="users">
-        <i class="fa-solid fa-users-gear"></i><span>Users</span>
-      </a>
-      <a class="nav-link" data-page="access">
-        <i class="fa-solid fa-fingerprint"></i><span>Access</span>
-      </a>
-      <a class="nav-link" data-page="logs">
-        <i class="fa-solid fa-timeline"></i><span>Logs</span>
-      </a>
-    </div>
-
-    <!-- Right cluster -->
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html"       class="nav-link"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a></li>
+      <li><a href="roles.html"       class="nav-link"><i class="fa-solid fa-user-tag"></i><span>Roles</span></a></li>
+      <li><a href="permissions.html" class="nav-link"><i class="fa-solid fa-key"></i><span>Permissions</span></a></li>
+      <li><a href="policy.html"      class="nav-link"><i class="fa-solid fa-shield-halved"></i><span>Policy</span></a></li>
+      <li><a href="staff.html"       class="nav-link"><i class="fa-solid fa-users"></i><span>Staff</span></a></li>
+      <li><a href="access.html"      class="nav-link"><i class="fa-solid fa-lock"></i><span>Access Control</span></a></li>
+      <li><a href="logs.html"        class="nav-link"><i class="fa-solid fa-list-check"></i><span>Activity Logs</span></a></li>
+    </ul>
     <div class="nav-right">
-      <div class="network-pill">
-        <span class="net-dot"></span>
-        <span class="net-label">Amoy</span>
-        <span class="net-block">#<span id="blockNumber">—</span></span>
-      </div>
-
-      <button class="btn-connect" id="connectBtn">
-        <i class="fa-solid fa-wallet"></i>
-        <span id="connectLabel">Connect Wallet</span>
+      <div class="network-badge"><span class="network-dot"></span><span class="network-label">Polygon Amoy</span></div>
+      <button class="btn-connect" id="connectWalletBtn" onclick="connectWallet()">
+        <i class="fa-solid fa-wallet"></i><span id="connectBtnText">Connect Wallet</span>
       </button>
-
-      <div class="wallet-chip hidden" id="walletChip">
-        <div class="wallet-avatar" id="walletAvatar"></div>
-        <div class="wallet-meta">
-          <span class="wallet-addr" id="walletAddr">0x0000…0000</span>
-          <span class="wallet-status">Connected</span>
-        </div>
+      <div class="wallet-address" id="walletAddress" style="display:none;">
+        <i class="fa-solid fa-circle-check" style="color:var(--success)"></i>
+        <span id="walletAddressText">0x0000...0000</span>
       </div>
-
-      <button class="hamburger" id="hamburger" aria-label="Menu">
-        <span></span><span></span><span></span>
-      </button>
+      <button class="hamburger" id="hamburger" onclick="toggleMobileMenu()"><i class="fa-solid fa-bars"></i></button>
     </div>
   </nav>
 
-  <!-- Mobile nav drawer -->
-  <div class="mobile-drawer hidden" id="mobileDrawer">
-    <a class="md-link active" data-page="dashboard"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
-    <a class="md-link" data-page="roles"><i class="fa-solid fa-shield-virus"></i> Role Management</a>
-    <a class="md-link" data-page="permissions"><i class="fa-solid fa-key"></i> Permissions</a>
-    <a class="md-link" data-page="users"><i class="fa-solid fa-users-gear"></i> User Management</a>
-    <a class="md-link" data-page="access"><i class="fa-solid fa-fingerprint"></i> Access Control</a>
-    <a class="md-link" data-page="logs"><i class="fa-solid fa-timeline"></i> Activity Logs</a>
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <div class="toast-icon" id="toastIcon"><i class="fa-solid fa-circle-info"></i></div>
+    <div class="toast-body">
+      <div class="toast-title" id="toastTitle">Notification</div>
+      <div class="toast-msg"   id="toastMsg">...</div>
+    </div>
+    <button class="toast-close" onclick="hideToast()"><i class="fa-solid fa-xmark"></i></button>
   </div>
 
-  <!-- ═══════════════════════════════ PAGES WRAPPER ════ -->
-  <div class="pages-wrapper">
+  <main class="main-content">
 
-    <!-- ════════════════ PAGE: Dashboard ════ -->
-    <section class="page active" id="page-dashboard">
-      <div class="page-hero">
-        <div class="hero-content">
-          <p class="hero-eyebrow"><i class="fa-solid fa-cube"></i> Polygon Amoy Testnet</p>
-          <h1 class="hero-title">Decentralized<br><span>Access Control</span></h1>
-          <p class="hero-sub">Role-based governance, fully on-chain. Manage roles, permissions, and user access with complete blockchain transparency.</p>
-          <div class="hero-cta">
-            <button class="hcta-btn hcta-primary" data-goto="roles"><i class="fa-solid fa-shield-virus"></i> Manage Roles</button>
-            <button class="hcta-btn hcta-secondary" data-goto="access"><i class="fa-solid fa-fingerprint"></i> Check Access</button>
-          </div>
-        </div>
-        <div class="hero-graphic">
-          <div class="orb orb-1"></div>
-          <div class="orb orb-2"></div>
-          <div class="hex-cluster">
-            <div class="hex hx-1"><i class="fa-solid fa-shield-halved"></i></div>
-            <div class="hex hx-2"><i class="fa-solid fa-key"></i></div>
-            <div class="hex hx-3"><i class="fa-solid fa-users-gear"></i></div>
-            <div class="hex hx-4"><i class="fa-solid fa-link"></i></div>
-            <div class="hex hx-5"><i class="fa-solid fa-lock"></i></div>
-            <div class="hex hx-6"><i class="fa-solid fa-cube"></i></div>
-          </div>
+    <!-- HERO -->
+    <section class="hero-banner">
+      <div class="hero-content">
+        <div class="hero-badge"><i class="fa-brands fa-ethereum"></i> Powered by Blockchain · Polygon Amoy</div>
+        <h1 class="hero-title">Decentralized Hospital<br><span>Role-Based Access Control</span></h1>
+        <p class="hero-sub">Secure, transparent, and tamper-proof access management for hospital staff and sensitive patient data — deployed on Polygon Amoy Testnet.</p>
+        <div class="hero-actions">
+          <button class="hero-btn" onclick="connectWallet()"><i class="fa-solid fa-wallet"></i> Connect Wallet</button>
+          <a href="roles.html" class="btn-ghost"><i class="fa-solid fa-arrow-right"></i> Manage Roles</a>
         </div>
       </div>
-
-      <!-- Stats strip -->
-      <div class="stats-strip">
-        <div class="sstat ss-violet">
-          <i class="fa-solid fa-shield-halved"></i>
-          <span class="ss-val" id="totalRoles">—</span>
-          <span class="ss-lbl">Roles</span>
-        </div>
-        <div class="sstat-div"></div>
-        <div class="sstat ss-cyan">
-          <i class="fa-solid fa-key"></i>
-          <span class="ss-val" id="totalPerms">—</span>
-          <span class="ss-lbl">Permissions</span>
-        </div>
-        <div class="sstat-div"></div>
-        <div class="sstat ss-emerald">
-          <i class="fa-solid fa-user-check"></i>
-          <span class="ss-val" id="activeUsers">—</span>
-          <span class="ss-lbl">Active Users</span>
-        </div>
-        <div class="sstat-div"></div>
-        <div class="sstat ss-amber">
-          <i class="fa-solid fa-cube"></i>
-          <span class="ss-val" id="txCount">0</span>
-          <span class="ss-lbl">Transactions</span>
-        </div>
-      </div>
-
-      <!-- Quick-action grid -->
-      <h2 class="section-heading">Navigate to</h2>
-      <div class="quick-grid">
-        <div class="quick-card qc-violet" data-goto="roles">
-          <div class="qc-top">
-            <div class="qc-icon"><i class="fa-solid fa-shield-virus"></i></div>
-            <i class="fa-solid fa-arrow-right qc-arrow"></i>
-          </div>
-          <h3>Role Management</h3>
-          <p>Create roles and assign them to wallets on-chain</p>
-          <div class="qc-tags"><span>createRole</span><span>assignRole</span></div>
-        </div>
-        <div class="quick-card qc-cyan" data-goto="permissions">
-          <div class="qc-top">
-            <div class="qc-icon"><i class="fa-solid fa-key"></i></div>
-            <i class="fa-solid fa-arrow-right qc-arrow"></i>
-          </div>
-          <h3>Permissions</h3>
-          <p>Register permissions and link them to roles</p>
-          <div class="qc-tags"><span>createPerm</span><span>assignPerm</span></div>
-        </div>
-        <div class="quick-card qc-amber" data-goto="users">
-          <div class="qc-top">
-            <div class="qc-icon"><i class="fa-solid fa-users-gear"></i></div>
-            <i class="fa-solid fa-arrow-right qc-arrow"></i>
-          </div>
-          <h3>User Management</h3>
-          <p>Suspend or permanently revoke wallet access</p>
-          <div class="qc-tags"><span>suspendUser</span><span>revokeUser</span></div>
-        </div>
-        <div class="quick-card qc-emerald" data-goto="access">
-          <div class="qc-top">
-            <div class="qc-icon"><i class="fa-solid fa-fingerprint"></i></div>
-            <i class="fa-solid fa-arrow-right qc-arrow"></i>
-          </div>
-          <h3>Access Control</h3>
-          <p>Query on-chain permission state for any wallet</p>
-          <div class="qc-tags"><span>hasPermission</span><span>view</span></div>
-        </div>
-        <div class="quick-card qc-indigo" data-goto="logs">
-          <div class="qc-top">
-            <div class="qc-icon"><i class="fa-solid fa-timeline"></i></div>
-            <i class="fa-solid fa-arrow-right qc-arrow"></i>
-          </div>
-          <h3>Activity Logs</h3>
-          <p>Live feed of all on-chain RBAC events</p>
-          <div class="qc-tags"><span>events</span><span>audit</span></div>
+      <div class="hero-visual">
+        <div class="hex-grid">
+          <div class="hex hex-1"><i class="fa-solid fa-user-doctor"></i></div>
+          <div class="hex hex-2"><i class="fa-solid fa-file-medical"></i></div>
+          <div class="hex hex-3"><i class="fa-solid fa-flask"></i></div>
+          <div class="hex hex-4"><i class="fa-solid fa-pills"></i></div>
+          <div class="hex hex-5"><i class="fa-solid fa-shield-halved"></i></div>
+          <div class="hex hex-6"><i class="fa-solid fa-link"></i></div>
         </div>
       </div>
     </section>
 
-    <!-- ════════════════ PAGE: Role Management ════ -->
-    <section class="page" id="page-roles">
-      <div class="page-header">
-        <div class="ph-icon ph-violet"><i class="fa-solid fa-shield-virus"></i></div>
-        <div class="ph-text">
-          <h1>Role Management</h1>
-          <p>Create new on-chain roles and assign them to wallet addresses</p>
+    <!-- DASHBOARD BODY -->
+    <div class="page-body fade-in">
+
+      <div class="section-header">
+        <div>
+          <div class="section-tag">Overview</div>
+          <h2 class="section-title">System Dashboard</h2>
+          <p class="section-desc">Real-time on-chain statistics for your hospital RBAC system.</p>
         </div>
-        <span class="ph-badge badge-violet">Admin Only</span>
-      </div>
-
-      <div class="form-grid two-col">
-
-        <!-- Create Role -->
-        <div class="form-card">
-          <div class="fc-accent fc-violet"></div>
-          <div class="fc-inner">
-            <div class="fc-head">
-              <div class="fch-icon fci-violet"><i class="fa-solid fa-shield-virus"></i></div>
-              <div>
-                <h3>Create Role</h3>
-                <p>Deploy a new role on-chain</p>
-              </div>
-            </div>
-            <div class="fc-fields">
-              <div class="field-row">
-                <label>Role Name</label>
-                <div class="field-wrap">
-                  <i class="fa-solid fa-signature fi"></i>
-                  <input type="text" id="roleName" class="finput" placeholder="e.g. MODERATOR" />
-                </div>
-              </div>
-            </div>
-            <button class="abtn ab-violet" id="createRoleBtn">
-              <i class="fa-solid fa-plus"></i> Create Role
-              <span class="btn-spin hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Assign Role to User -->
-        <div class="form-card">
-          <div class="fc-accent fc-emerald"></div>
-          <div class="fc-inner">
-            <div class="fc-head">
-              <div class="fch-icon fci-emerald"><i class="fa-solid fa-user-shield"></i></div>
-              <div>
-                <h3>Assign Role to User</h3>
-                <p>Grant a role to a wallet address</p>
-              </div>
-            </div>
-            <div class="fc-fields">
-              <div class="field-row">
-                <label>Wallet Address</label>
-                <div class="field-wrap">
-                  <i class="fa-solid fa-wallet fi"></i>
-                  <input type="text" id="roleUserAddr" class="finput" placeholder="0x…" />
-                </div>
-              </div>
-              <div class="field-row">
-                <label>Role ID</label>
-                <div class="field-wrap">
-                  <i class="fa-solid fa-hashtag fi"></i>
-                  <input type="number" id="roleId" class="finput" placeholder="Role ID" min="0" />
-                </div>
-              </div>
-            </div>
-            <button class="abtn ab-emerald" id="assignRoleBtn">
-              <i class="fa-solid fa-user-shield"></i> Assign Role
-              <span class="btn-spin hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
-            </button>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ════════════════ PAGE: Permissions ════ -->
-    <section class="page" id="page-permissions">
-      <div class="page-header">
-        <div class="ph-icon ph-cyan"><i class="fa-solid fa-key"></i></div>
-        <div class="ph-text">
-          <h1>Permission Management</h1>
-          <p>Register granular permissions and attach them to roles</p>
-        </div>
-        <span class="ph-badge badge-cyan">Admin Only</span>
-      </div>
-
-      <div class="form-grid two-col">
-
-        <!-- Create Permission -->
-        <div class="form-card">
-          <div class="fc-accent fc-cyan"></div>
-          <div class="fc-inner">
-            <div class="fc-head">
-              <div class="fch-icon fci-cyan"><i class="fa-solid fa-key"></i></div>
-              <div>
-                <h3>Create Permission</h3>
-                <p>Register a new permission rule</p>
-              </div>
-            </div>
-            <div class="fc-fields">
-              <div class="field-row">
-                <label>Permission Name</label>
-                <div class="field-wrap">
-                  <i class="fa-solid fa-lock fi"></i>
-                  <input type="text" id="permName" class="finput" placeholder="e.g. WRITE_ACCESS" />
-                </div>
-              </div>
-            </div>
-            <button class="abtn ab-cyan" id="createPermBtn">
-              <i class="fa-solid fa-plus"></i> Create Permission
-              <span class="btn-spin hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Assign Permission to Role -->
-        <div class="form-card">
-          <div class="fc-accent fc-indigo"></div>
-          <div class="fc-inner">
-            <div class="fc-head">
-              <div class="fch-icon fci-indigo"><i class="fa-solid fa-link"></i></div>
-              <div>
-                <h3>Assign to Role</h3>
-                <p>Link a permission to an existing role</p>
-              </div>
-            </div>
-            <div class="fc-fields">
-              <div class="field-row">
-                <label>Role ID</label>
-                <div class="field-wrap">
-                  <i class="fa-solid fa-hashtag fi"></i>
-                  <input type="number" id="assignRoleId" class="finput" placeholder="Role ID" min="0" />
-                </div>
-              </div>
-              <div class="field-row">
-                <label>Permission ID</label>
-                <div class="field-wrap">
-                  <i class="fa-solid fa-hashtag fi"></i>
-                  <input type="number" id="assignPermId" class="finput" placeholder="Permission ID" min="0" />
-                </div>
-              </div>
-            </div>
-            <button class="abtn ab-indigo" id="assignPermBtn">
-              <i class="fa-solid fa-link"></i> Assign Permission
-              <span class="btn-spin hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
-            </button>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ════════════════ PAGE: User Management ════ -->
-    <section class="page" id="page-users">
-      <div class="page-header">
-        <div class="ph-icon ph-amber"><i class="fa-solid fa-users-gear"></i></div>
-        <div class="ph-text">
-          <h1>User Management</h1>
-          <p>Suspend or permanently revoke wallet access on-chain</p>
-        </div>
-        <span class="ph-badge badge-amber">Admin Only</span>
-      </div>
-
-      <div class="form-grid two-col">
-
-        <!-- Suspend User -->
-        <div class="form-card">
-          <div class="fc-accent fc-amber"></div>
-          <div class="fc-inner">
-            <div class="fc-head">
-              <div class="fch-icon fci-amber"><i class="fa-solid fa-circle-pause"></i></div>
-              <div>
-                <h3>Suspend User</h3>
-                <p>Temporarily freeze wallet access</p>
-              </div>
-            </div>
-            <div class="fc-fields">
-              <div class="field-row">
-                <label>Wallet Address</label>
-                <div class="field-wrap">
-                  <i class="fa-solid fa-wallet fi"></i>
-                  <input type="text" id="suspendAddr" class="finput" placeholder="0x…" />
-                </div>
-              </div>
-            </div>
-            <div class="warn-note">
-              <i class="fa-solid fa-triangle-exclamation"></i>
-              Suspends all active permissions for this wallet.
-            </div>
-            <button class="abtn ab-amber" id="suspendBtn">
-              <i class="fa-solid fa-circle-pause"></i> Suspend User
-              <span class="btn-spin hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Revoke User -->
-        <div class="form-card">
-          <div class="fc-accent fc-red"></div>
-          <div class="fc-inner">
-            <div class="fc-head">
-              <div class="fch-icon fci-red"><i class="fa-solid fa-ban"></i></div>
-              <div>
-                <h3>Revoke User</h3>
-                <p>Permanently remove all access</p>
-              </div>
-            </div>
-            <div class="fc-fields">
-              <div class="field-row">
-                <label>Wallet Address</label>
-                <div class="field-wrap">
-                  <i class="fa-solid fa-wallet fi"></i>
-                  <input type="text" id="revokeAddr" class="finput" placeholder="0x…" />
-                </div>
-              </div>
-            </div>
-            <div class="warn-note warn-danger">
-              <i class="fa-solid fa-skull-crossbones"></i>
-              This action is irreversible. All roles are revoked permanently.
-            </div>
-            <button class="abtn ab-red" id="revokeBtn">
-              <i class="fa-solid fa-ban"></i> Revoke User
-              <span class="btn-spin hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
-            </button>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ════════════════ PAGE: Access Control ════ -->
-    <section class="page" id="page-access">
-      <div class="page-header">
-        <div class="ph-icon ph-violet"><i class="fa-solid fa-fingerprint"></i></div>
-        <div class="ph-text">
-          <h1>Access Control</h1>
-          <p>Verify whether a wallet holds a specific on-chain permission</p>
-        </div>
-        <span class="ph-badge badge-violet">Read-only</span>
-      </div>
-
-      <div class="access-layout">
-        <!-- Input card -->
-        <div class="form-card access-input-card">
-          <div class="fc-accent fc-violet"></div>
-          <div class="fc-inner">
-            <div class="fc-head">
-              <div class="fch-icon fci-violet"><i class="fa-solid fa-magnifying-glass"></i></div>
-              <div>
-                <h3>Check Permission</h3>
-                <p>Query on-chain permission state</p>
-              </div>
-            </div>
-            <div class="fc-fields">
-              <div class="field-row">
-                <label>Wallet Address</label>
-                <div class="field-wrap">
-                  <i class="fa-solid fa-wallet fi"></i>
-                  <input type="text" id="checkAddr" class="finput" placeholder="0x… (auto-filled on connect)" />
-                </div>
-              </div>
-              <div class="field-row">
-                <label>Permission ID</label>
-                <div class="field-wrap">
-                  <i class="fa-solid fa-hashtag fi"></i>
-                  <input type="number" id="checkPermId" class="finput" placeholder="Permission ID" min="0" />
-                </div>
-              </div>
-            </div>
-            <button class="abtn ab-violet" id="checkAccessBtn">
-              <i class="fa-solid fa-magnifying-glass"></i> Check Access
-            </button>
-          </div>
-        </div>
-
-        <!-- Result display -->
-        <div class="access-result-card" id="accessResult">
-          <div class="arc-placeholder">
-            <div class="arc-shield"><i class="fa-solid fa-shield-halved"></i></div>
-            <h3>Awaiting Query</h3>
-            <p>Enter a wallet address and permission ID to verify access status</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ════════════════ PAGE: Activity Logs ════ -->
-    <section class="page" id="page-logs">
-      <div class="page-header">
-        <div class="ph-icon ph-indigo"><i class="fa-solid fa-timeline"></i></div>
-        <div class="ph-text">
-          <h1>Activity Logs</h1>
-          <p>Live on-chain event feed — all RBAC operations in real time</p>
-        </div>
-        <span class="live-pill"><span class="live-dot"></span>Live</span>
-      </div>
-
-      <div class="logs-bar">
-        <div class="filter-row">
-          <button class="fpill active" data-filter="all">All Events</button>
-          <button class="fpill" data-filter="role">Roles</button>
-          <button class="fpill" data-filter="permission">Permissions</button>
-          <button class="fpill" data-filter="user">Users</button>
-          <button class="fpill" data-filter="access">Access</button>
-        </div>
-        <button class="btn-clear" id="clearLogs">
-          <i class="fa-solid fa-trash-can"></i> Clear
+        <button class="btn-secondary" onclick="refreshDashboard()">
+          <i class="fa-solid fa-arrows-rotate" id="refreshIcon"></i> Refresh
         </button>
       </div>
 
-      <div class="timeline-wrap" id="activityFeed">
-        <div class="feed-empty" id="feedEmpty">
-          <i class="fa-solid fa-wave-square"></i>
-          <p>No activity recorded yet</p>
-          <span>Connect your wallet and interact with the contract to see events here</span>
+      <!-- Stat Cards -->
+      <div class="stats-grid">
+        <div class="stat-card stat-blue">
+          <div class="stat-icon"><i class="fa-solid fa-user-tag"></i></div>
+          <div class="stat-body">
+            <div class="stat-label">Total Roles</div>
+            <div class="stat-value" id="totalRoles">—</div>
+            <div class="stat-hint">On-chain roles defined</div>
+          </div>
+          <div class="stat-bg-icon"><i class="fa-solid fa-user-tag"></i></div>
+        </div>
+        <div class="stat-card stat-green">
+          <div class="stat-icon"><i class="fa-solid fa-key"></i></div>
+          <div class="stat-body">
+            <div class="stat-label">Total Permissions</div>
+            <div class="stat-value" id="totalPermissions">—</div>
+            <div class="stat-hint">Registered access rights</div>
+          </div>
+          <div class="stat-bg-icon"><i class="fa-solid fa-key"></i></div>
+        </div>
+        <div class="stat-card stat-purple">
+          <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+          <div class="stat-body">
+            <div class="stat-label">Staff Assigned</div>
+            <div class="stat-value" id="totalStaff">—</div>
+            <div class="stat-hint">Staff with assigned roles</div>
+          </div>
+          <div class="stat-bg-icon"><i class="fa-solid fa-users"></i></div>
+        </div>
+        <div class="stat-card stat-orange">
+          <div class="stat-icon"><i class="fa-solid fa-crown"></i></div>
+          <div class="stat-body">
+            <div class="stat-label">Super Admin</div>
+            <div class="stat-value mono" id="superAdminShort" style="font-size:.9rem;">—</div>
+            <div class="stat-hint">Contract owner address</div>
+          </div>
+          <div class="stat-bg-icon"><i class="fa-solid fa-crown"></i></div>
         </div>
       </div>
-    </section>
 
-  </div><!-- /pages-wrapper -->
-
-  <!-- ══════════════════════════════ TOAST STACK ════ -->
-  <div class="toast-stack" id="toastContainer"></div>
-
-  <!-- ══════════════════════════════ TX MODAL ════ -->
-  <div class="modal-overlay hidden" id="txModal">
-    <div class="tx-modal">
-      <div class="tx-orbit">
-        <div class="orbit-ring r1"></div>
-        <div class="orbit-ring r2"></div>
-        <div class="orbit-core"><i class="fa-solid fa-cube"></i></div>
+      <!-- Quick Lists -->
+      <div class="quick-grid">
+        <div class="quick-card">
+          <div class="quick-card-header">
+            <h3><i class="fa-solid fa-user-tag"></i> Defined Roles</h3>
+            <span class="badge badge-blue" id="rolesCountBadge">0</span>
+          </div>
+          <ul class="quick-list" id="dashRolesList">
+            <li class="empty-state"><i class="fa-solid fa-circle-info"></i> Connect wallet to load roles</li>
+          </ul>
+        </div>
+        <div class="quick-card">
+          <div class="quick-card-header">
+            <h3><i class="fa-solid fa-key"></i> Defined Permissions</h3>
+            <span class="badge badge-green" id="permsCountBadge">0</span>
+          </div>
+          <ul class="quick-list" id="dashPermsList">
+            <li class="empty-state"><i class="fa-solid fa-circle-info"></i> Connect wallet to load permissions</li>
+          </ul>
+        </div>
       </div>
-      <h3 id="txTitle">Processing Transaction</h3>
-      <p id="txDesc">Waiting for MetaMask confirmation…</p>
-      <div class="tx-hash-row hidden" id="txHashWrap">
-        <span class="thr-label">Tx Hash</span>
-        <a class="thr-val" id="txHashLink" target="_blank" rel="noopener noreferrer">—</a>
+
+    </div><!-- /page-body -->
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand"><i class="fa-solid fa-shield-halved"></i><span>Hospital RBAC System</span></div>
+      <div class="footer-info">
+        <span>Contract: <code class="footer-addr">0xc00F4d45936e0537D606Bc65cC0E8d2C052aC553</code></span>
+        <span class="footer-sep">·</span><span>Polygon Amoy Testnet</span>
+        <span class="footer-sep">·</span><span>Chain ID: 80002</span>
       </div>
     </div>
-  </div>
+  </footer>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.9.0/ethers.umd.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

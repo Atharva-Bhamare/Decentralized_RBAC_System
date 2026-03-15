@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Staff Management — Hospital RBAC System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body data-page="staff">
+
+  <!-- ── NAVBAR ── -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-brand">
+      <div class="nav-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="nav-title">
+        <span class="nav-title-main">Hospital RBAC</span>
+        <span class="nav-title-sub">Access Control System</span>
+      </div>
+    </div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html"       class="nav-link"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a></li>
+      <li><a href="roles.html"       class="nav-link"><i class="fa-solid fa-user-tag"></i><span>Roles</span></a></li>
+      <li><a href="permissions.html" class="nav-link"><i class="fa-solid fa-key"></i><span>Permissions</span></a></li>
+      <li><a href="policy.html"      class="nav-link"><i class="fa-solid fa-shield-halved"></i><span>Policy</span></a></li>
+      <li><a href="staff.html"       class="nav-link"><i class="fa-solid fa-users"></i><span>Staff</span></a></li>
+      <li><a href="access.html"      class="nav-link"><i class="fa-solid fa-lock"></i><span>Access Control</span></a></li>
+      <li><a href="logs.html"        class="nav-link"><i class="fa-solid fa-list-check"></i><span>Activity Logs</span></a></li>
+    </ul>
+    <div class="nav-right">
+      <div class="network-badge"><span class="network-dot"></span><span class="network-label">Polygon Amoy</span></div>
+      <button class="btn-connect" id="connectWalletBtn" onclick="connectWallet()">
+        <i class="fa-solid fa-wallet"></i><span id="connectBtnText">Connect Wallet</span>
+      </button>
+      <div class="wallet-address" id="walletAddress" style="display:none;">
+        <i class="fa-solid fa-circle-check" style="color:var(--success)"></i>
+        <span id="walletAddressText">0x0000...0000</span>
+      </div>
+      <button class="hamburger" id="hamburger" onclick="toggleMobileMenu()"><i class="fa-solid fa-bars"></i></button>
+    </div>
+  </nav>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <div class="toast-icon" id="toastIcon"><i class="fa-solid fa-circle-info"></i></div>
+    <div class="toast-body">
+      <div class="toast-title" id="toastTitle">Notification</div>
+      <div class="toast-msg"   id="toastMsg">...</div>
+    </div>
+    <button class="toast-close" onclick="hideToast()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <main class="main-content">
+
+    <!-- PAGE HERO -->
+    <div class="page-hero">
+      <div class="page-hero-inner">
+        <div class="page-hero-left">
+          <div class="breadcrumb">
+            <a href="index.html">Dashboard</a>
+            <i class="fa-solid fa-chevron-right"></i>
+            <span style="color:rgba(255,255,255,.7)">Staff Management</span>
+          </div>
+          <div class="page-hero-tag"><i class="fa-solid fa-users"></i> Blockchain Write</div>
+          <h1 class="page-hero-title">Staff <span>Management</span></h1>
+          <p class="page-hero-sub">Assign roles to hospital staff, suspend access temporarily, or permanently revoke user permissions on-chain.</p>
+        </div>
+        <div class="page-hero-icon"><i class="fa-solid fa-users"></i></div>
+      </div>
+    </div>
+
+    <!-- PAGE BODY -->
+    <div class="page-body fade-in">
+
+      <div class="section-header">
+        <div>
+          <div class="section-tag">Blockchain Write</div>
+          <h2 class="section-title">Manage Staff Access</h2>
+          <p class="section-desc">Assign roles to staff wallets and control their access status on the blockchain.</p>
+        </div>
+      </div>
+
+      <div class="three-col-staff">
+
+        <!-- ── Card 1: Assign Role ── -->
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-icon blue"><i class="fa-solid fa-user-plus"></i></div>
+            <h3>Assign Role to Staff</h3>
+          </div>
+          <div class="form-body">
+            <div class="field-group">
+              <label class="field-label">Staff Wallet Address <span class="required">*</span></label>
+              <input type="text" id="staffWalletInput" class="field-input mono" placeholder="0x..."/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Select Role <span class="required">*</span></label>
+              <div class="select-wrapper">
+                <select id="staffRoleSelect" class="field-select">
+                  <option value="">— Select a Role —</option>
+                </select>
+                <i class="fa-solid fa-chevron-down select-arrow"></i>
+              </div>
+            </div>
+            <div class="field-hint-block" style="background:var(--primary-bg); border-color:rgba(37,99,235,.18); color:var(--primary-dark);">
+              <i class="fa-solid fa-circle-info" style="color:var(--primary)"></i>
+              The staff member will inherit all permissions assigned to the selected role.
+            </div>
+            <button class="btn-primary full-width" onclick="assignRole()" id="assignRoleBtn">
+              <i class="fa-solid fa-user-check"></i>
+              <span>Assign Role</span>
+              <div class="btn-loader" id="assignRoleLoader"></div>
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Card 2: Suspend / Activate ── -->
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-icon orange"><i class="fa-solid fa-ban"></i></div>
+            <h3>Suspend / Activate Staff</h3>
+          </div>
+          <div class="form-body">
+            <div class="field-group">
+              <label class="field-label">Staff Wallet Address <span class="required">*</span></label>
+              <input type="text" id="suspendWalletInput" class="field-input mono" placeholder="0x..."/>
+            </div>
+            <div class="field-hint-block">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              Suspending temporarily restricts access while keeping the role assignment intact on the blockchain.
+            </div>
+            <div class="btn-stack">
+              <button class="btn-warning full-width" onclick="suspendUser()" id="suspendBtn">
+                <i class="fa-solid fa-pause-circle"></i>
+                <span>Suspend Staff</span>
+                <div class="btn-loader" id="suspendLoader"></div>
+              </button>
+              <button class="btn-success full-width" onclick="activateUser()" id="activateBtn">
+                <i class="fa-solid fa-play-circle"></i>
+                <span>Activate Staff</span>
+                <div class="btn-loader" id="activateLoader"></div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Card 3: Revoke ── -->
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-icon danger"><i class="fa-solid fa-user-slash"></i></div>
+            <h3>Revoke Staff Access</h3>
+          </div>
+          <div class="form-body">
+            <div class="field-group">
+              <label class="field-label">Staff Wallet Address <span class="required">*</span></label>
+              <input type="text" id="revokeWalletInput" class="field-input mono" placeholder="0x..."/>
+            </div>
+            <div class="field-hint-block danger-hint">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              Revoking permanently removes the user's role and all access rights from the blockchain. This action cannot be undone.
+            </div>
+            <button class="btn-danger full-width" onclick="revokeUser()" id="revokeBtn">
+              <i class="fa-solid fa-user-xmark"></i>
+              <span>Revoke Staff Access</span>
+              <div class="btn-loader" id="revokeLoader"></div>
+            </button>
+          </div>
+        </div>
+
+      </div><!-- /three-col-staff -->
+    </div><!-- /page-body -->
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand"><i class="fa-solid fa-shield-halved"></i><span>Hospital RBAC System</span></div>
+      <div class="footer-info">
+        <span>Contract: <code class="footer-addr">0xc00F4d45936e0537D606Bc65cC0E8d2C052aC553</code></span>
+        <span class="footer-sep">·</span><span>Polygon Amoy Testnet</span>
+        <span class="footer-sep">·</span><span>Chain ID: 80002</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

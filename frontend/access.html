@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Access Control — Hospital RBAC System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body data-page="access">
+
+  <!-- ── NAVBAR ── -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-brand">
+      <div class="nav-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="nav-title">
+        <span class="nav-title-main">Hospital RBAC</span>
+        <span class="nav-title-sub">Access Control System</span>
+      </div>
+    </div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html"       class="nav-link"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a></li>
+      <li><a href="roles.html"       class="nav-link"><i class="fa-solid fa-user-tag"></i><span>Roles</span></a></li>
+      <li><a href="permissions.html" class="nav-link"><i class="fa-solid fa-key"></i><span>Permissions</span></a></li>
+      <li><a href="policy.html"      class="nav-link"><i class="fa-solid fa-shield-halved"></i><span>Policy</span></a></li>
+      <li><a href="staff.html"       class="nav-link"><i class="fa-solid fa-users"></i><span>Staff</span></a></li>
+      <li><a href="access.html"      class="nav-link"><i class="fa-solid fa-lock"></i><span>Access Control</span></a></li>
+      <li><a href="logs.html"        class="nav-link"><i class="fa-solid fa-list-check"></i><span>Activity Logs</span></a></li>
+    </ul>
+    <div class="nav-right">
+      <div class="network-badge"><span class="network-dot"></span><span class="network-label">Polygon Amoy</span></div>
+      <button class="btn-connect" id="connectWalletBtn" onclick="connectWallet()">
+        <i class="fa-solid fa-wallet"></i><span id="connectBtnText">Connect Wallet</span>
+      </button>
+      <div class="wallet-address" id="walletAddress" style="display:none;">
+        <i class="fa-solid fa-circle-check" style="color:var(--success)"></i>
+        <span id="walletAddressText">0x0000...0000</span>
+      </div>
+      <button class="hamburger" id="hamburger" onclick="toggleMobileMenu()"><i class="fa-solid fa-bars"></i></button>
+    </div>
+  </nav>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <div class="toast-icon" id="toastIcon"><i class="fa-solid fa-circle-info"></i></div>
+    <div class="toast-body">
+      <div class="toast-title" id="toastTitle">Notification</div>
+      <div class="toast-msg"   id="toastMsg">...</div>
+    </div>
+    <button class="toast-close" onclick="hideToast()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <main class="main-content">
+
+    <!-- PAGE HERO -->
+    <div class="page-hero">
+      <div class="page-hero-inner">
+        <div class="page-hero-left">
+          <div class="breadcrumb">
+            <a href="index.html">Dashboard</a>
+            <i class="fa-solid fa-chevron-right"></i>
+            <span style="color:rgba(255,255,255,.7)">Access Control</span>
+          </div>
+          <div class="page-hero-tag"><i class="fa-solid fa-lock"></i> Blockchain Read</div>
+          <h1 class="page-hero-title">Access <span>Verification</span></h1>
+          <p class="page-hero-sub">Query the blockchain to verify whether a hospital staff member holds a specific permission. No gas required — it's a read-only call.</p>
+        </div>
+        <div class="page-hero-icon"><i class="fa-solid fa-lock"></i></div>
+      </div>
+    </div>
+
+    <!-- PAGE BODY -->
+    <div class="page-body fade-in">
+
+      <div class="section-header">
+        <div>
+          <div class="section-tag">Blockchain Read · No Gas Required</div>
+          <h2 class="section-title">Check Staff Access</h2>
+          <p class="section-desc">Verify on-chain whether a staff wallet address has a specific permission.</p>
+        </div>
+      </div>
+
+      <div class="access-layout">
+
+        <!-- Check Form -->
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-icon blue"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+            <h3>Verify Permission Access</h3>
+          </div>
+          <div class="form-body">
+            <div class="field-group">
+              <label class="field-label">Staff Wallet Address <span class="required">*</span></label>
+              <div class="input-with-btn">
+                <input type="text" id="checkWalletInput" class="field-input mono" placeholder="0x... (auto-fill if wallet connected)"/>
+                <button class="btn-icon" onclick="autofillWallet()" title="Auto-fill connected wallet">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </button>
+              </div>
+              <p class="field-hint">Click the wand icon to auto-fill your connected wallet address.</p>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Permission to Check <span class="required">*</span></label>
+              <div class="select-wrapper">
+                <select id="checkPermSelect" class="field-select">
+                  <option value="">— Select a Permission —</option>
+                </select>
+                <i class="fa-solid fa-chevron-down select-arrow"></i>
+              </div>
+            </div>
+            <button class="btn-primary full-width" onclick="checkAccess()" id="checkAccessBtn">
+              <i class="fa-solid fa-circle-question"></i>
+              <span>Check Access</span>
+              <div class="btn-loader" id="checkAccessLoader"></div>
+            </button>
+
+            <!-- How it works -->
+            <div style="padding:.9rem 1rem; background:var(--bg-surface); border:1px solid var(--border-light); border-radius:var(--radius-sm); margin-top:.25rem;">
+              <p style="font-size:.75rem; color:var(--text-muted); line-height:1.6;">
+                <strong style="color:var(--text-secondary);">How it works:</strong><br>
+                This calls <code style="font-family:JetBrains Mono,monospace; font-size:.72rem; background:rgba(37,99,235,.07); padding:.1rem .3rem; border-radius:4px;">checkAccess(address, permissionId)</code>
+                on the smart contract. The contract checks if the user has a role with the selected permission and whether they are currently active.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result Panel -->
+        <div class="access-result-panel" id="accessResultPanel">
+          <div class="access-result-idle" id="accessResultIdle">
+            <div class="access-idle-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <h4>Access Verification</h4>
+            <p>Run an access check to see the result displayed here in real-time.</p>
+          </div>
+
+          <div class="access-result-granted" id="accessResultGranted" style="display:none;">
+            <div class="result-badge granted">
+              <div class="result-badge-ring"></div>
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <h3>Access Granted</h3>
+            <p id="grantedMsg">This staff member has the required permission.</p>
+            <div class="result-details" id="grantedDetails"></div>
+          </div>
+
+          <div class="access-result-denied" id="accessResultDenied" style="display:none;">
+            <div class="result-badge denied">
+              <div class="result-badge-ring"></div>
+              <i class="fa-solid fa-circle-xmark"></i>
+            </div>
+            <h3>Access Denied</h3>
+            <p id="deniedMsg">This staff member lacks the required permission.</p>
+            <div class="result-details" id="deniedDetails"></div>
+          </div>
+        </div>
+
+      </div><!-- /access-layout -->
+    </div><!-- /page-body -->
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand"><i class="fa-solid fa-shield-halved"></i><span>Hospital RBAC System</span></div>
+      <div class="footer-info">
+        <span>Contract: <code class="footer-addr">0xc00F4d45936e0537D606Bc65cC0E8d2C052aC553</code></span>
+        <span class="footer-sep">·</span><span>Polygon Amoy Testnet</span>
+        <span class="footer-sep">·</span><span>Chain ID: 80002</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
