@@ -1,15 +1,3 @@
-/* ═══════════════════════════════════════════════════════════════
-   HOSPITAL RBAC DASHBOARD — app.js (Shared across all pages)
-   Network : Polygon Amoy Testnet (Chain ID: 80002)
-   Contract: 0xc00F4d45936e0537D606Bc65cC0E8d2C052aC553
-   Library : ethers.js v6
-   Strategy: Page detection via body[data-page], localStorage
-             used to persist logs and staff count across pages.
-═══════════════════════════════════════════════════════════════ */
-
-// ─────────────────────────────────────────────────────────────
-// CONTRACT CONFIGURATION
-// ─────────────────────────────────────────────────────────────
 const CONTRACT_ADDRESS       = "0xc00F4d45936e0537D606Bc65cC0E8d2C052aC553";
 const POLYGON_AMOY_RPC_PRIMARY = "https://polygon-amoy-bor-rpc.publicnode.com"; // primary — PublicNode (no API key, highly reliable)
 
@@ -46,39 +34,12 @@ const CONTRACT_ABI = [
   { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "users", "outputs": [{ "internalType": "uint256", "name": "roleId", "type": "uint256" }, { "internalType": "enum RBAC.UserStatus", "name": "status", "type": "uint8" }], "stateMutability": "view", "type": "function" }
 ];
 
-// ─────────────────────────────────────────────────────────────
-// GAS CONFIGURATION  (Polygon Amoy Testnet)
-//
-// Root causes of "gas tip cap below minimum" errors:
-//   1. ethers.js v6 auto-estimation returns values below Amoy's
-//      minimum (~25 Gwei maxPriorityFeePerGas).
-//   2. Calling provider.getFeeData() on the public Amoy RPC often
-//      triggers rate-limiting ("Transaction NaN - rate limited"),
-//      which causes the dynamic fetch to fail unpredictably.
-//
-// Solution: Use a STATIC gas config — no network call needed.
-//   50 Gwei tip and 60 Gwei cap are well above Amoy's minimum
-//   and low enough to never waste significant test MATIC.
-// ─────────────────────────────────────────────────────────────
-
 /** Static gas overrides — safe for every write tx on Polygon Amoy */
 const AMOY_GAS = {
   maxPriorityFeePerGas: ethers.parseUnits('50', 'gwei'), // tip:  50 Gwei  (min ~25 Gwei)
   maxFeePerGas:         ethers.parseUnits('60', 'gwei'), // cap:  60 Gwei  (tip + base fee)
 };
 
-/**
- * sendTx(fn) — Wraps every contract write call with:
- *   • Static AMOY_GAS overrides (no getFeeData() = no rate-limit risk)
- *   • Auto-retry up to 3 times on rate-limit errors (code -32005 / -32603)
- *   • 1.5 s back-off delay between retries
- *
- * Usage:  const tx = await sendTx(() => contract.createRole(name));
- */
-/**
- * Brief pause before sending — lets any in-flight page-load RPC calls
- * finish so we do not pile write + read calls on the RPC at the same time.
- */
 async function sendTx(fn, retries = 3) {
   await sleep(300); // small pre-tx breathing room
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -107,9 +68,6 @@ async function sendTx(fn, retries = 3) {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// APP STATE
-// ─────────────────────────────────────────────────────────────
 let provider         = null;
 let signer           = null;
 let contract         = null;   // read + write (needs signer)
@@ -119,10 +77,6 @@ let connectedAccount = null;
 // In-memory caches (populated fresh per page load from blockchain)
 let rolesCache       = [];  // [{ id: BigInt, name: string }]
 let permissionsCache = [];  // [{ id: BigInt, name: string }]
-
-// ─────────────────────────────────────────────────────────────
-// PERSISTENCE HELPERS  (localStorage)
-// ─────────────────────────────────────────────────────────────
 
 /** Save a log entry to localStorage (persists across page navigations) */
 function saveLog(entry) {
@@ -140,20 +94,11 @@ function getStoredLogs() {
   catch { return []; }
 }
 
-/** Clear all stored logs */
-function clearStoredLogs() {
-  localStorage.removeItem('rbac_logs');
-}
-
 /** Get / increment the tracked staff count */
 function getStaffCount()  { return parseInt(localStorage.getItem('rbac_staff_count') || '0'); }
 function incStaffCount()  { const c = getStaffCount() + 1; localStorage.setItem('rbac_staff_count', c); return c; }
 
-// ─────────────────────────────────────────────────────────────
-// WALLET CONNECTION  (shared — runs on every page)
-// ─────────────────────────────────────────────────────────────
-
-/** Connect MetaMask, enforce Polygon Amoy, initialize contract instances */
+/** Wallet Connection - Connect MetaMask, enforce Polygon Amoy, initialize contract instances */
 async function connectWallet() {
   if (!window.ethereum) {
     showToast('error', 'MetaMask Required', 'Please install MetaMask to continue.');
@@ -355,10 +300,6 @@ async function refreshDashboard() {
   finally { setTimeout(() => icon && icon.classList.remove('spin'), 800); }
 }
 
-// ─────────────────────────────────────────────────────────────
-// RENDER FUNCTIONS
-// ─────────────────────────────────────────────────────────────
-
 /** Render dashboard stat cards and quick lists */
 function renderDashboard() {
   setEl('totalRoles',       rolesCache.length);
@@ -413,10 +354,6 @@ function renderPermsTable() {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// POPULATE DROPDOWNS
-// ─────────────────────────────────────────────────────────────
-
 /** Fill all role <select> elements with current rolesCache */
 function populateRoleDropdowns() {
   ['policyRoleSelect', 'staffRoleSelect'].forEach(id => {
@@ -441,6 +378,11 @@ function populatePermDropdowns() {
   });
 }
 
+function isDuplicateName(name, cache) {
+  const normalized = name.trim().toLowerCase();
+  return cache.find(item => item.name.trim().toLowerCase() === normalized) || null;
+}
+
 // ─────────────────────────────────────────────────────────────
 // ROLE MANAGEMENT  (roles.html)
 // ─────────────────────────────────────────────────────────────
@@ -449,6 +391,15 @@ async function createRole() {
   if (!contract) return requireWallet();
   const name = document.getElementById('roleNameInput').value.trim();
   if (!name) { showToast('warning', 'Input Required', 'Please enter a role name.'); return; }
+
+  // ── Duplicate check — block before any blockchain call ──
+  const existing = isDuplicateName(name, rolesCache);
+  if (existing) {
+    showToast('warning', 'Role Already Exists',
+      `"${existing.name}" already exists as Role #${existing.id}. Use the existing role instead.`);
+    return;
+  }
+
   try {
     setBtnLoading('createRoleBtn', true);
     showToast('info', 'Transaction Pending', `Creating role "${name}"...`);
@@ -475,6 +426,15 @@ async function createPermission() {
   if (!contract) return requireWallet();
   const name = document.getElementById('permNameInput').value.trim();
   if (!name) { showToast('warning', 'Input Required', 'Please enter a permission name.'); return; }
+
+  // ── Duplicate check — block before any blockchain call ──
+  const existing = isDuplicateName(name, permissionsCache);
+  if (existing) {
+    showToast('warning', 'Permission Already Exists',
+      `"${existing.name}" already exists as Permission #${existing.id}. Use the existing permission instead.`);
+    return;
+  }
+
   try {
     setBtnLoading('createPermBtn', true);
     showToast('info', 'Transaction Pending', `Creating permission "${name}"...`);
@@ -715,10 +675,10 @@ function addLog(type, message, addr = null) {
   if (currentPage() === 'logs') renderLogs();
 }
 
-/** Render timeline from localStorage */
+/** Render timeline from localStorage, then re-apply both active filters */
 function renderLogs() {
-  const timeline  = document.getElementById('timeline');
-  const emptyEl   = document.getElementById('logsEmpty');
+  const timeline = document.getElementById('timeline');
+  const emptyEl  = document.getElementById('logsEmpty');
   if (!timeline) return;
 
   const entries = getStoredLogs();
@@ -726,12 +686,14 @@ function renderLogs() {
   if (entries.length === 0) {
     if (emptyEl) emptyEl.style.display = 'flex';
     timeline.innerHTML = '';
+    updateWalletFilterBadge(0, false);
     return;
   }
   if (emptyEl) emptyEl.style.display = 'none';
 
+  // Each item stores full address in data-addr for wallet filtering
   timeline.innerHTML = entries.map(e => `
-    <div class="timeline-item" data-category="${logCategory(e.type)}">
+    <div class="timeline-item" data-category="${logCategory(e.type)}" data-addr="${(e.addr || '').toLowerCase()}">
       <div class="timeline-icon ${logIconClass(e.type)}"><i class="${logIconName(e.type)}"></i></div>
       <div class="timeline-body">
         <div class="timeline-title">${e.message}</div>
@@ -740,34 +702,104 @@ function renderLogs() {
       <div class="timeline-time">${e.time}<br><span style="font-size:.62rem;opacity:.6">${e.date}</span></div>
     </div>`).join('');
 
-  // Re-apply active filter
-  const active = document.querySelector('.log-filter.active');
-  if (active) {
-    const m = active.getAttribute('onclick')?.match(/'([^']+)'/);
-    if (m) applyLogFilter(m[1]);
-  }
+  // Re-apply both filters after render
+  applyAllFilters();
 }
 
+/** Category tab filter — re-applies wallet filter on top */
 function filterLogs(category, btn) {
   document.querySelectorAll('.log-filter').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  applyLogFilter(category);
+  applyAllFilters();
 }
 
-function applyLogFilter(category) {
+/**
+ * Master filter function — applies BOTH the category tab AND the
+ * wallet address search simultaneously. An item is visible only
+ * when it passes BOTH filters.
+ */
+function applyAllFilters() {
+  // Get active category
+  const activeBtn  = document.querySelector('.log-filter.active');
+  const m          = activeBtn?.getAttribute('onclick')?.match(/'([^']+)'/);
+  const category   = m ? m[1] : 'all';
+
+  // Get wallet filter value (lowercase, trimmed)
+  const walletRaw  = document.getElementById('walletFilterInput')?.value?.trim() || '';
+  const wallet     = walletRaw.toLowerCase();
+
+  let visibleCount = 0;
+
   document.querySelectorAll('.timeline-item').forEach(item => {
-    item.classList.toggle('hidden', category !== 'all' && item.dataset.category !== category);
+    const catMatch    = category === 'all' || item.dataset.category === category;
+    const addrMatch   = wallet === '' || item.dataset.addr.includes(wallet);
+    const visible     = catMatch && addrMatch;
+    item.classList.toggle('hidden', !visible);
+    if (visible) visibleCount++;
   });
+
+  // Show/hide result count badge
+  updateWalletFilterBadge(visibleCount, wallet !== '');
 }
 
-function clearLogs() {
-  clearStoredLogs();
-  const tl = document.getElementById('timeline');
-  if (tl) tl.innerHTML = '';
-  const em = document.getElementById('logsEmpty');
-  if (em) em.style.display = 'flex';
-  showToast('success', 'Logs Cleared', 'All activity log entries have been cleared.');
+// Keep old name as alias so existing callers still work
+function applyLogFilter(category) { applyAllFilters(); }
+
+// ─────────────────────────────────────────────────────────────
+// WALLET ADDRESS FILTER HELPERS  (logs.html)
+// ─────────────────────────────────────────────────────────────
+
+/** Fired on every keystroke in the wallet filter input */
+function filterLogsByWallet() {
+  const input     = document.getElementById('walletFilterInput');
+  const clearBtn  = document.getElementById('walletFilterClear');
+  const hasValue  = input?.value?.trim().length > 0;
+
+  // Show/hide the × clear button
+  if (clearBtn) clearBtn.style.display = hasValue ? 'block' : 'none';
+
+  applyAllFilters();
 }
+
+/** Auto-fill the wallet filter with the connected wallet address */
+function autofillWalletFilter() {
+  if (!connectedAccount) {
+    showToast('warning', 'Not Connected', 'Connect your wallet first.');
+    return;
+  }
+  const input = document.getElementById('walletFilterInput');
+  if (input) {
+    input.value = connectedAccount;
+    const clearBtn = document.getElementById('walletFilterClear');
+    if (clearBtn) clearBtn.style.display = 'block';
+    applyAllFilters();
+    showToast('success', 'Wallet Filter Applied', `Showing logs for ${shortAddr(connectedAccount)}`);
+  }
+}
+
+/** Clear the wallet address filter and reset view */
+function clearWalletFilter() {
+  const input    = document.getElementById('walletFilterInput');
+  const clearBtn = document.getElementById('walletFilterClear');
+  if (input)    input.value = '';
+  if (clearBtn) clearBtn.style.display = 'none';
+  applyAllFilters();
+}
+
+/** Show/hide the results count badge next to the filter */
+function updateWalletFilterBadge(count, isFiltering) {
+  const badge     = document.getElementById('walletFilterBadge');
+  const countEl   = document.getElementById('walletFilterCount');
+  if (!badge) return;
+  badge.style.display  = isFiltering ? 'inline-flex' : 'none';
+  if (countEl) countEl.textContent = count;
+  // Turn badge red if 0 results found
+  badge.style.background  = count === 0 ? 'var(--danger-bg)'   : 'var(--primary-bg)';
+  badge.style.borderColor = count === 0 ? 'rgba(239,68,68,.2)' : 'rgba(37,99,235,.2)';
+  badge.style.color       = count === 0 ? 'var(--danger)'      : 'var(--primary)';
+}
+
+
 
 // ─────────────────────────────────────────────────────────────
 // LOG HELPERS
@@ -908,7 +940,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     updateWalletUI(connectedAccount);
     await loadPageData();
     listenToEvents();
-    //showToast('success', 'Auto-Connected', `Reconnected: ${shortAddr(connectedAccount)}`);
   } catch (err) {
     console.log('Auto-connect skipped:', err.message);
   }
