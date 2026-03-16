@@ -9,19 +9,11 @@ contract RBAC {
         superAdmin = msg.sender;
     }
 
-    // ---------------------------
-    // ENUMS
-    // ---------------------------
-
     enum UserStatus {
         Active,
         Suspended,
         Revoked
     }
-
-    // ---------------------------
-    // STRUCTS
-    // ---------------------------
 
     struct Role {
         string name;
@@ -38,10 +30,6 @@ contract RBAC {
         UserStatus status;
     }
 
-    // ---------------------------
-    // STORAGE
-    // ---------------------------
-
     mapping(uint256 => Role) public roles;
     mapping(uint256 => Permission) public permissions;
 
@@ -53,10 +41,6 @@ contract RBAC {
 
     uint256 public roleCount;
     uint256 public permissionCount;
-
-    // ---------------------------
-    // EVENTS (AUDIT LOGS)
-    // ---------------------------
 
     event RoleCreated(uint256 roleId, string name);
     event PermissionCreated(uint256 permissionId, string name);
@@ -71,10 +55,6 @@ contract RBAC {
 
     event AccessGranted(address user, uint256 roleId, uint256 permissionId);
     event AccessDenied(address user, uint256 roleId, uint256 permissionId);
-
-    // ---------------------------
-    // MODIFIERS
-    // ---------------------------
 
     modifier onlyAdmin() {
         require(msg.sender == superAdmin, "Not admin");
@@ -91,10 +71,6 @@ contract RBAC {
         _;
     }
 
-    // ---------------------------
-    // ROLE MANAGEMENT
-    // ---------------------------
-
     function createRole(string memory name) public onlyAdmin {
         roleCount++;
 
@@ -106,10 +82,6 @@ contract RBAC {
         emit RoleCreated(roleCount, name);
     }
 
-    // ---------------------------
-    // PERMISSION MANAGEMENT
-    // ---------------------------
-
     function createPermission(string memory name) public onlyAdmin {
         permissionCount++;
 
@@ -120,10 +92,6 @@ contract RBAC {
 
         emit PermissionCreated(permissionCount, name);
     }
-
-    // ---------------------------
-    // ASSIGN PERMISSION TO ROLE
-    // ---------------------------
 
     function assignPermissionToRole(
         uint256 roleId,
@@ -139,10 +107,6 @@ contract RBAC {
         emit PermissionAssigned(roleId, permissionId);
     }
 
-    // ---------------------------
-    // ASSIGN ROLE TO USER
-    // ---------------------------
-
     function assignRole(address user, uint256 roleId)
         public
         onlyAdmin
@@ -155,10 +119,6 @@ contract RBAC {
 
         emit RoleAssigned(user, roleId);
     }
-
-    // ---------------------------
-    // USER STATUS MANAGEMENT
-    // ---------------------------
 
     function suspendUser(address user) public onlyAdmin {
         require(users[user].roleId != 0, "User not registered");
@@ -183,10 +143,6 @@ contract RBAC {
 
         emit UserRevoked(user);
     }
-
-    // ---------------------------
-    // ACCESS CHECK (ZERO TRUST)
-    // ---------------------------
 
     function checkAccess(
     address user,

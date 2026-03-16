@@ -82,9 +82,7 @@
           <h2 class="section-title">Blockchain Activity</h2>
           <p class="section-desc">All on-chain events emitted by the RBAC smart contract, persisted across page navigations.</p>
         </div>
-        <button class="btn-secondary" onclick="clearLogs()">
-          <i class="fa-solid fa-trash-can"></i> Clear Logs
-        </button>
+
       </div>
 
       <!-- Filter tabs -->
@@ -104,6 +102,36 @@
         <button class="log-filter" onclick="filterLogs('access', this)">
           <i class="fa-solid fa-lock"></i> Access
         </button>
+      </div>
+
+      <!-- Wallet Address Filter -->
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;flex:1;min-width:260px;gap:.5rem;padding:.6rem .9rem;background:white;border:1.5px solid var(--border);border-radius:var(--radius-sm);transition:all .2s ease;" id="walletFilterWrapper">
+          <i class="fa-solid fa-magnifying-glass" style="color:var(--text-muted);font-size:.82rem;flex-shrink:0;"></i>
+          <input
+            type="text"
+            id="walletFilterInput"
+            placeholder="Filter by wallet address (0x...)"
+            autocomplete="off"
+            oninput="filterLogsByWallet()"
+            style="border:none;outline:none;background:transparent;font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--text-primary);width:100%;"
+            onfocus="document.getElementById('walletFilterWrapper').style.borderColor='var(--primary-light)';document.getElementById('walletFilterWrapper').style.boxShadow='0 0 0 3px var(--primary-glow)'"
+            onblur="document.getElementById('walletFilterWrapper').style.borderColor='var(--border)';document.getElementById('walletFilterWrapper').style.boxShadow='none'"
+          />
+          <button onclick="clearWalletFilter()" id="walletFilterClear" title="Clear filter"
+            style="display:none;background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:.8rem;padding:0;transition:color .2s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--text-muted)'">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <button onclick="autofillWalletFilter()" title="Fill connected wallet"
+          style="display:inline-flex;align-items:center;gap:.4rem;padding:.6rem .9rem;background:var(--primary-bg);border:1.5px solid rgba(37,99,235,.2);border-radius:var(--radius-sm);font-size:.78rem;font-weight:600;color:var(--primary);cursor:pointer;transition:all .2s;white-space:nowrap;font-family:'Plus Jakarta Sans',sans-serif;"
+          onmouseover="this.style.background='var(--primary)';this.style.color='white'" onmouseout="this.style.background='var(--primary-bg)';this.style.color='var(--primary)'">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> My Wallet
+        </button>
+        <!-- Result count badge -->
+        <div id="walletFilterBadge" style="display:none;padding:.35rem .75rem;background:var(--primary-bg);border:1px solid rgba(37,99,235,.2);border-radius:100px;font-size:.75rem;font-weight:700;color:var(--primary);white-space:nowrap;">
+          <i class="fa-solid fa-filter"></i> <span id="walletFilterCount">0</span> result(s)
+        </div>
       </div>
 
       <!-- Log feed -->
