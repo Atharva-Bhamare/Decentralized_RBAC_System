@@ -80,8 +80,9 @@
         <div>
           <div class="section-tag">Blockchain Write</div>
           <h2 class="section-title">Assign Permissions to Roles</h2>
-          <p class="section-desc">Select a role and a permission to create a binding on-chain policy.</p>
+          <p class="section-desc">Select a role and one or more permissions to create binding on-chain policies.</p>
         </div>
+        <div class="section-tag" style="color:var(--warning);background:var(--warning-bg);border-color:rgba(245,158,11,.2);gap:.4rem;"><i class="fa-solid fa-crown"></i> SuperAdmin Only</div>
       </div>
 
       <div class="two-col">
@@ -94,6 +95,7 @@
           </div>
           <div class="form-body">
 
+            <!-- Role Dropdown -->
             <div class="field-group">
               <label class="field-label">Select Role <span class="required">*</span></label>
               <div class="select-wrapper">
@@ -105,32 +107,41 @@
               <p class="field-hint">Roles are loaded live from the blockchain.</p>
             </div>
 
+            <!-- Multi-Permission Checkbox List -->
             <div class="field-group">
-              <label class="field-label">Select Permission <span class="required">*</span></label>
-              <div class="select-wrapper">
-                <select id="policyPermSelect" class="field-select" onchange="updatePolicyPreview()">
-                  <option value="">— Select a Permission —</option>
-                </select>
-                <i class="fa-solid fa-chevron-down select-arrow"></i>
+              <label class="field-label">
+                Select Permissions <span class="required">*</span>
+                <span id="permSelectedCount" style="margin-left:.5rem;padding:.15rem .5rem;background:var(--purple-bg);color:var(--purple);border-radius:100px;font-size:.68rem;font-weight:700;display:none;">0 selected</span>
+              </label>
+              <div id="permCheckboxList" style="border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-surface);max-height:220px;overflow-y:auto;">
+                <div style="padding:1rem;text-align:center;color:var(--text-muted);font-size:.82rem;font-style:italic;">
+                  <i class="fa-solid fa-circle-info"></i> Connect wallet to load permissions
+                </div>
               </div>
-              <p class="field-hint">Permissions are loaded live from the blockchain.</p>
+              <!-- Select All / Clear All controls -->
+              <div id="permCheckboxControls" style="display:none;display:flex;gap:.5rem;margin-top:.4rem;">
+                <button type="button" onclick="selectAllPermissions()" style="background:none;border:none;font-size:.72rem;font-weight:700;color:var(--primary);cursor:pointer;padding:0;font-family:'Plus Jakarta Sans',sans-serif;">
+                  <i class="fa-solid fa-check-double"></i> Select All
+                </button>
+                <span style="color:var(--border);font-size:.72rem;">|</span>
+                <button type="button" onclick="clearAllPermissions()" style="background:none;border:none;font-size:.72rem;font-weight:700;color:var(--danger);cursor:pointer;padding:0;font-family:'Plus Jakarta Sans',sans-serif;">
+                  <i class="fa-solid fa-xmark"></i> Clear All
+                </button>
+              </div>
+              <p class="field-hint">Tick one or more permissions to assign. Each will be a separate on-chain transaction.</p>
             </div>
 
-            <!-- Live Preview -->
+            <!-- Live Multi-Permission Preview -->
             <div class="policy-preview" id="policyPreview" style="display:none;">
-              <div class="policy-preview-inner">
-                <span class="policy-role" id="previewRole">—</span>
-                <i class="fa-solid fa-arrow-right"></i>
-                <span class="policy-perm" id="previewPerm">—</span>
-              </div>
-              <p class="policy-preview-label">
-                <i class="fa-solid fa-link"></i> This policy will be written to the blockchain
+              <div id="previewContent" style="width:100%;"></div>
+              <p class="policy-preview-label" style="margin-top:.5rem;">
+                <i class="fa-solid fa-link"></i> Each permission will be written as a separate blockchain transaction
               </p>
             </div>
 
             <button class="btn-primary full-width purple-btn" onclick="assignPermissionToRole()" id="assignPermBtn">
               <i class="fa-solid fa-link"></i>
-              <span>Assign Permission to Role</span>
+              <span id="assignPermBtnText">Assign Permissions to Role</span>
               <div class="btn-loader" id="assignPermLoader"></div>
             </button>
 
@@ -202,7 +213,7 @@
             </div>
             <div class="table-wrapper">
               <table class="data-table">
-                <thead><tr><th>ID</th><th>Role Name</th><th>Status</th></tr></thead>
+                <thead><tr><th>ID</th><th>Role Name</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody id="rolesTableBody">
                   <tr><td colspan="3" class="table-empty"><i class="fa-solid fa-circle-info"></i> Connect wallet to load roles.</td></tr>
                 </tbody>
@@ -217,7 +228,7 @@
             </div>
             <div class="table-wrapper">
               <table class="data-table">
-                <thead><tr><th>ID</th><th>Permission Name</th><th>Status</th></tr></thead>
+                <thead><tr><th>ID</th><th>Permission Name</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody id="permsTableBody">
                   <tr><td colspan="3" class="table-empty"><i class="fa-solid fa-circle-info"></i> Connect wallet to load permissions.</td></tr>
                 </tbody>
@@ -249,7 +260,7 @@
     <div class="footer-inner">
       <div class="footer-brand"><i class="fa-solid fa-shield-halved"></i><span>Hospital RBAC System</span></div>
       <div class="footer-info">
-        <span>Contract: <code class="footer-addr">0xc00F4d45936e0537D606Bc65cC0E8d2C052aC553</code></span>
+        <span>Contract: <code class="footer-addr">0xc1161F9d7F04576aD207a79d5Fa25e62fAa2FE80</code></span>
         <span class="footer-sep">·</span><span>Polygon Amoy Testnet</span>
         <span class="footer-sep">·</span><span>Chain ID: 80002</span>
       </div>
