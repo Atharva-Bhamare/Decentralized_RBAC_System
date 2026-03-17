@@ -1,4 +1,16 @@
-const CONTRACT_ADDRESS       = "0xc00F4d45936e0537D606Bc65cC0E8d2C052aC553";
+/* ═══════════════════════════════════════════════════════════════
+   HOSPITAL RBAC DASHBOARD — app.js (Shared across all pages)
+   Network : Polygon Amoy Testnet (Chain ID: 80002)
+   Contract: 0xc1161F9d7F04576aD207a79d5Fa25e62fAa2FE80
+   Library : ethers.js v6
+   Strategy: Page detection via body[data-page], localStorage
+             used to persist logs and staff count across pages.
+═══════════════════════════════════════════════════════════════ */
+
+// ─────────────────────────────────────────────────────────────
+// CONTRACT CONFIGURATION
+// ─────────────────────────────────────────────────────────────
+const CONTRACT_ADDRESS       = "0xc1161F9d7F04576aD207a79d5Fa25e62fAa2FE80";
 const POLYGON_AMOY_RPC_PRIMARY = "https://polygon-amoy-bor-rpc.publicnode.com"; // primary — PublicNode (no API key, highly reliable)
 
 /** Small delay between sequential RPC calls to avoid rate-limiting the public node */
@@ -8,31 +20,55 @@ const POLYGON_AMOY_CHAIN_ID  = 80002;
 
 const CONTRACT_ABI = [
   { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" },
-  { "anonymous": false, "name": "AccessDenied",      "type": "event", "inputs": [{ "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "roleId", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "permissionId", "type": "uint256" }] },
-  { "anonymous": false, "name": "AccessGranted",     "type": "event", "inputs": [{ "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "roleId", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "permissionId", "type": "uint256" }] },
-  { "anonymous": false, "name": "PermissionAssigned","type": "event", "inputs": [{ "indexed": false, "internalType": "uint256", "name": "roleId", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "permissionId", "type": "uint256" }] },
-  { "anonymous": false, "name": "PermissionCreated", "type": "event", "inputs": [{ "indexed": false, "internalType": "uint256", "name": "permissionId", "type": "uint256" }, { "indexed": false, "internalType": "string", "name": "name", "type": "string" }] },
-  { "anonymous": false, "name": "RoleAssigned",      "type": "event", "inputs": [{ "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "roleId", "type": "uint256" }] },
-  { "anonymous": false, "name": "RoleCreated",       "type": "event", "inputs": [{ "indexed": false, "internalType": "uint256", "name": "roleId", "type": "uint256" }, { "indexed": false, "internalType": "string", "name": "name", "type": "string" }] },
-  { "anonymous": false, "name": "UserActivated",     "type": "event", "inputs": [{ "indexed": false, "internalType": "address", "name": "user", "type": "address" }] },
-  { "anonymous": false, "name": "UserRevoked",       "type": "event", "inputs": [{ "indexed": false, "internalType": "address", "name": "user", "type": "address" }] },
-  { "anonymous": false, "name": "UserSuspended",     "type": "event", "inputs": [{ "indexed": false, "internalType": "address", "name": "user", "type": "address" }] },
-  { "inputs": [{ "internalType": "address", "name": "user", "type": "address" }], "name": "activateUser",      "outputs": [], "stateMutability": "nonpayable", "type": "function" },
-  { "inputs": [{ "internalType": "uint256", "name": "roleId", "type": "uint256" }, { "internalType": "uint256", "name": "permissionId", "type": "uint256" }], "name": "assignPermissionToRole", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
-  { "inputs": [{ "internalType": "address", "name": "user", "type": "address" }, { "internalType": "uint256", "name": "roleId", "type": "uint256" }], "name": "assignRole", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
-  { "inputs": [{ "internalType": "address", "name": "user", "type": "address" }, { "internalType": "uint256", "name": "permissionId", "type": "uint256" }], "name": "checkAccess", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
-  { "inputs": [{ "internalType": "string", "name": "name", "type": "string" }], "name": "createPermission", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
-  { "inputs": [{ "internalType": "string", "name": "name", "type": "string" }], "name": "createRole",       "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "anonymous": false, "name": "AccessDenied",          "type": "event", "inputs": [{ "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "roleId", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "permissionId", "type": "uint256" }] },
+  { "anonymous": false, "name": "AccessGranted",         "type": "event", "inputs": [{ "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "roleId", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "permissionId", "type": "uint256" }] },
+  { "anonymous": false, "name": "PermissionAssigned",    "type": "event", "inputs": [{ "indexed": false, "internalType": "uint256", "name": "roleId", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "permissionId", "type": "uint256" }] },
+  { "anonymous": false, "name": "PermissionCreated",     "type": "event", "inputs": [{ "indexed": false, "internalType": "uint256", "name": "permissionId", "type": "uint256" }, { "indexed": false, "internalType": "string", "name": "name", "type": "string" }] },
+  { "anonymous": false, "name": "PermissionDeactivated", "type": "event", "inputs": [{ "indexed": false, "internalType": "uint256", "name": "permissionId", "type": "uint256" }, { "indexed": false, "internalType": "string", "name": "name", "type": "string" }] },
+  { "anonymous": false, "name": "PermissionReactivated", "type": "event", "inputs": [{ "indexed": false, "internalType": "uint256", "name": "permissionId", "type": "uint256" }, { "indexed": false, "internalType": "string", "name": "name", "type": "string" }] },
+  { "anonymous": false, "name": "RoleAssigned",          "type": "event", "inputs": [{ "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "roleId", "type": "uint256" }] },
+  { "anonymous": false, "name": "RoleCreated",           "type": "event", "inputs": [{ "indexed": false, "internalType": "uint256", "name": "roleId", "type": "uint256" }, { "indexed": false, "internalType": "string", "name": "name", "type": "string" }] },
+  { "anonymous": false, "name": "RoleDeactivated",       "type": "event", "inputs": [{ "indexed": false, "internalType": "uint256", "name": "roleId", "type": "uint256" }, { "indexed": false, "internalType": "string", "name": "name", "type": "string" }] },
+  { "anonymous": false, "name": "RoleReactivated",       "type": "event", "inputs": [{ "indexed": false, "internalType": "uint256", "name": "roleId", "type": "uint256" }, { "indexed": false, "internalType": "string", "name": "name", "type": "string" }] },
+  { "anonymous": false, "name": "UserActivated",         "type": "event", "inputs": [{ "indexed": false, "internalType": "address", "name": "user", "type": "address" }] },
+  { "anonymous": false, "name": "UserRevoked",           "type": "event", "inputs": [{ "indexed": false, "internalType": "address", "name": "user", "type": "address" }] },
+  { "anonymous": false, "name": "UserSuspended",         "type": "event", "inputs": [{ "indexed": false, "internalType": "address", "name": "user", "type": "address" }] },
+  { "inputs": [{ "internalType": "address",   "name": "user",          "type": "address"   }], "name": "activateUser",                    "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [{ "internalType": "uint256",   "name": "roleId",        "type": "uint256"   }, { "internalType": "uint256[]", "name": "permissionIds", "type": "uint256[]" }], "name": "assignMultiplePermissionsToRole", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [{ "internalType": "uint256",   "name": "roleId",        "type": "uint256"   }, { "internalType": "uint256",   "name": "permissionId",  "type": "uint256"   }], "name": "assignPermissionToRole",         "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [{ "internalType": "address",   "name": "user",          "type": "address"   }, { "internalType": "uint256",   "name": "roleId",        "type": "uint256"   }], "name": "assignRole",                     "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [{ "internalType": "address",   "name": "user",          "type": "address"   }, { "internalType": "uint256",   "name": "permissionId",  "type": "uint256"   }], "name": "checkAccess",                    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
+  { "inputs": [{ "internalType": "string",    "name": "name",          "type": "string"    }], "name": "createPermission",               "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [{ "internalType": "string",    "name": "name",          "type": "string"    }], "name": "createRole",                     "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [{ "internalType": "uint256",   "name": "permId",        "type": "uint256"   }], "name": "deactivatePermission",           "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [{ "internalType": "uint256",   "name": "roleId",        "type": "uint256"   }], "name": "deactivateRole",                 "outputs": [], "stateMutability": "nonpayable", "type": "function" },
   { "inputs": [], "name": "permissionCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
-  { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "permissions", "outputs": [{ "internalType": "string", "name": "name", "type": "string" }, { "internalType": "bool", "name": "exists", "type": "bool" }], "stateMutability": "view", "type": "function" },
-  { "inputs": [{ "internalType": "address", "name": "user", "type": "address" }], "name": "revokeUser",  "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [{ "internalType": "uint256",   "name": "",              "type": "uint256"   }], "name": "permissions", "outputs": [{ "internalType": "string", "name": "name", "type": "string" }, { "internalType": "bool", "name": "exists", "type": "bool" }, { "internalType": "bool", "name": "isActive", "type": "bool" }], "stateMutability": "view", "type": "function" },
+  { "inputs": [{ "internalType": "uint256",   "name": "permId",        "type": "uint256"   }], "name": "reactivatePermission",           "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [{ "internalType": "uint256",   "name": "roleId",        "type": "uint256"   }], "name": "reactivateRole",                 "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [{ "internalType": "address",   "name": "user",          "type": "address"   }], "name": "revokeUser",                     "outputs": [], "stateMutability": "nonpayable", "type": "function" },
   { "inputs": [], "name": "roleCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
-  { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "uint256", "name": "", "type": "uint256" }], "name": "rolePermissions", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
-  { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "roles", "outputs": [{ "internalType": "string", "name": "name", "type": "string" }, { "internalType": "bool", "name": "exists", "type": "bool" }], "stateMutability": "view", "type": "function" },
+  { "inputs": [{ "internalType": "uint256",   "name": "",              "type": "uint256"   }, { "internalType": "uint256", "name": "", "type": "uint256" }], "name": "rolePermissions", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
+  { "inputs": [{ "internalType": "uint256",   "name": "",              "type": "uint256"   }], "name": "roles", "outputs": [{ "internalType": "string", "name": "name", "type": "string" }, { "internalType": "bool", "name": "exists", "type": "bool" }, { "internalType": "bool", "name": "isActive", "type": "bool" }], "stateMutability": "view", "type": "function" },
   { "inputs": [], "name": "superAdmin", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
-  { "inputs": [{ "internalType": "address", "name": "user", "type": "address" }], "name": "suspendUser", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
-  { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "users", "outputs": [{ "internalType": "uint256", "name": "roleId", "type": "uint256" }, { "internalType": "enum RBAC.UserStatus", "name": "status", "type": "uint8" }], "stateMutability": "view", "type": "function" }
+  { "inputs": [{ "internalType": "address",   "name": "user",          "type": "address"   }], "name": "suspendUser",                    "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [{ "internalType": "address",   "name": "",              "type": "address"   }], "name": "users", "outputs": [{ "internalType": "uint256", "name": "roleId", "type": "uint256" }, { "internalType": "enum RBAC.UserStatus", "name": "status", "type": "uint8" }], "stateMutability": "view", "type": "function" }
 ];
+
+// ─────────────────────────────────────────────────────────────
+// GAS CONFIGURATION  (Polygon Amoy Testnet)
+//
+// Root causes of "gas tip cap below minimum" errors:
+//   1. ethers.js v6 auto-estimation returns values below Amoy's
+//      minimum (~25 Gwei maxPriorityFeePerGas).
+//   2. Calling provider.getFeeData() on the public Amoy RPC often
+//      triggers rate-limiting ("Transaction NaN - rate limited"),
+//      which causes the dynamic fetch to fail unpredictably.
+//
+// Solution: Use a STATIC gas config — no network call needed.
+//   50 Gwei tip and 60 Gwei cap are well above Amoy's minimum
+//   and low enough to never waste significant test MATIC.
+// ─────────────────────────────────────────────────────────────
 
 /** Static gas overrides — safe for every write tx on Polygon Amoy */
 const AMOY_GAS = {
@@ -40,6 +76,18 @@ const AMOY_GAS = {
   maxFeePerGas:         ethers.parseUnits('60', 'gwei'), // cap:  60 Gwei  (tip + base fee)
 };
 
+/**
+ * sendTx(fn) — Wraps every contract write call with:
+ *   • Static AMOY_GAS overrides (no getFeeData() = no rate-limit risk)
+ *   • Auto-retry up to 3 times on rate-limit errors (code -32005 / -32603)
+ *   • 1.5 s back-off delay between retries
+ *
+ * Usage:  const tx = await sendTx(() => contract.createRole(name));
+ */
+/**
+ * Brief pause before sending — lets any in-flight page-load RPC calls
+ * finish so we do not pile write + read calls on the RPC at the same time.
+ */
 async function sendTx(fn, retries = 3) {
   await sleep(300); // small pre-tx breathing room
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -68,6 +116,9 @@ async function sendTx(fn, retries = 3) {
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// APP STATE
+// ─────────────────────────────────────────────────────────────
 let provider         = null;
 let signer           = null;
 let contract         = null;   // read + write (needs signer)
@@ -77,6 +128,10 @@ let connectedAccount = null;
 // In-memory caches (populated fresh per page load from blockchain)
 let rolesCache       = [];  // [{ id: BigInt, name: string }]
 let permissionsCache = [];  // [{ id: BigInt, name: string }]
+
+// ─────────────────────────────────────────────────────────────
+// PERSISTENCE HELPERS  (localStorage)
+// ─────────────────────────────────────────────────────────────
 
 /** Save a log entry to localStorage (persists across page navigations) */
 function saveLog(entry) {
@@ -94,11 +149,40 @@ function getStoredLogs() {
   catch { return []; }
 }
 
+/**
+ * Check if the stored logs belong to the current contract.
+ * Clears stale logs in TWO cases:
+ *   1. A different contract address was stored (redeployment)
+ *   2. No address was ever stored (first run of this version — old logs
+ *      may exist from before this check was introduced)
+ */
+function clearStaleLogsIfContractChanged() {
+  try {
+    const storedAddr = localStorage.getItem('rbac_contract_addr');
+
+    // Wipe if: address changed OR never been set before
+    if (storedAddr !== CONTRACT_ADDRESS) {
+      localStorage.removeItem('rbac_logs');
+      localStorage.removeItem('rbac_staff_count');
+      console.log(`Logs cleared. Reason: ${storedAddr === null ? 'first run' : `contract changed (${storedAddr} → ${CONTRACT_ADDRESS})`}`);
+    }
+
+    // Always persist the current contract address
+    localStorage.setItem('rbac_contract_addr', CONTRACT_ADDRESS);
+  } catch (e) { console.warn('Stale log check failed:', e); }
+}
+
+
+
 /** Get / increment the tracked staff count */
 function getStaffCount()  { return parseInt(localStorage.getItem('rbac_staff_count') || '0'); }
 function incStaffCount()  { const c = getStaffCount() + 1; localStorage.setItem('rbac_staff_count', c); return c; }
 
-/** Wallet Connection - Connect MetaMask, enforce Polygon Amoy, initialize contract instances */
+// ─────────────────────────────────────────────────────────────
+// WALLET CONNECTION  (shared — runs on every page)
+// ─────────────────────────────────────────────────────────────
+
+/** Connect MetaMask, enforce Polygon Amoy, initialize contract instances */
 async function connectWallet() {
   if (!window.ethereum) {
     showToast('error', 'MetaMask Required', 'Please install MetaMask to continue.');
@@ -247,7 +331,7 @@ async function loadRoles() {
     for (let i = 1n; i <= count; i++) {
       if (i > 1n) await sleep(RPC_DELAY_MS); // stagger calls to avoid rate-limiting
       const r = await roContract.roles(i);
-      if (r.exists) rolesCache.push({ id: i, name: r.name });
+      if (r.exists) rolesCache.push({ id: i, name: r.name, isActive: r.isActive });
     }
     // Update count badges wherever they exist on this page
     setEl('rolesListCount',  rolesCache.length);
@@ -265,7 +349,7 @@ async function loadPermissions() {
     for (let i = 1n; i <= count; i++) {
       if (i > 1n) await sleep(RPC_DELAY_MS); // stagger calls to avoid rate-limiting
       const p = await roContract.permissions(i);
-      if (p.exists) permissionsCache.push({ id: i, name: p.name });
+      if (p.exists) permissionsCache.push({ id: i, name: p.name, isActive: p.isActive });
     }
     setEl('permsListCount',  permissionsCache.length);
     setEl('permsCountBadge', permissionsCache.length);
@@ -300,6 +384,10 @@ async function refreshDashboard() {
   finally { setTimeout(() => icon && icon.classList.remove('spin'), 800); }
 }
 
+// ─────────────────────────────────────────────────────────────
+// RENDER FUNCTIONS
+// ─────────────────────────────────────────────────────────────
+
 /** Render dashboard stat cards and quick lists */
 function renderDashboard() {
   setEl('totalRoles',       rolesCache.length);
@@ -322,37 +410,69 @@ function renderDashboard() {
   }
 }
 
-/** Render roles data table */
+/** Render roles data table with isActive status and toggle buttons */
 function renderRolesTable() {
   const tbody = document.getElementById('rolesTableBody');
   if (!tbody) return;
   if (rolesCache.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="3" class="table-empty"><i class="fa-solid fa-circle-info"></i> No roles created yet.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" class="table-empty"><i class="fa-solid fa-circle-info"></i> No roles created yet.</td></tr>`;
   } else {
     tbody.innerHTML = rolesCache.map((r, i) => `
       <tr class="${i === rolesCache.length - 1 ? 'new-row' : ''}">
         <td><code style="font-size:.78rem;color:var(--text-muted)">#${r.id}</code></td>
         <td><div class="role-name-cell"><i class="${roleIcon(r.name)}"></i>${escHtml(r.name)}</div></td>
-        <td><span class="status-pill status-active">Active</span></td>
+        <td>
+          <span class="status-pill ${r.isActive ? 'status-active' : 'status-inactive'}">
+            ${r.isActive ? 'Active' : 'Inactive'}
+          </span>
+        </td>
+        <td>
+          ${r.isActive
+            ? `<button class="tbl-btn tbl-btn-danger" onclick="deactivateRole(${r.id}, '${escHtml(r.name)}')">
+                <i class="fa-solid fa-ban"></i> Deactivate
+               </button>`
+            : `<button class="tbl-btn tbl-btn-success" onclick="reactivateRole(${r.id}, '${escHtml(r.name)}')">
+                <i class="fa-solid fa-circle-check"></i> Reactivate
+               </button>`
+          }
+        </td>
       </tr>`).join('');
   }
 }
 
-/** Render permissions data table */
+/** Render permissions data table with isActive status and toggle buttons */
 function renderPermsTable() {
   const tbody = document.getElementById('permsTableBody');
   if (!tbody) return;
   if (permissionsCache.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="3" class="table-empty"><i class="fa-solid fa-circle-info"></i> No permissions created yet.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" class="table-empty"><i class="fa-solid fa-circle-info"></i> No permissions created yet.</td></tr>`;
   } else {
     tbody.innerHTML = permissionsCache.map((p, i) => `
       <tr class="${i === permissionsCache.length - 1 ? 'new-row' : ''}">
         <td><code style="font-size:.78rem;color:var(--text-muted)">#${p.id}</code></td>
         <td><div class="perm-name-cell"><i class="${permIcon(p.name)}"></i>${escHtml(p.name)}</div></td>
-        <td><span class="status-pill status-active">Active</span></td>
+        <td>
+          <span class="status-pill ${p.isActive ? 'status-active' : 'status-inactive'}">
+            ${p.isActive ? 'Active' : 'Inactive'}
+          </span>
+        </td>
+        <td>
+          ${p.isActive
+            ? `<button class="tbl-btn tbl-btn-danger" onclick="deactivatePermission(${p.id}, '${escHtml(p.name)}')">
+                <i class="fa-solid fa-ban"></i> Deactivate
+               </button>`
+            : `<button class="tbl-btn tbl-btn-success" onclick="reactivatePermission(${p.id}, '${escHtml(p.name)}')">
+                <i class="fa-solid fa-circle-check"></i> Reactivate
+               </button>`
+          }
+        </td>
       </tr>`).join('');
   }
 }
+
+// ─────────────────────────────────────────────────────────────
+// POPULATE DROPDOWNS
+// ─────────────────────────────────────────────────────────────
 
 /** Fill all role <select> elements with current rolesCache */
 function populateRoleDropdowns() {
@@ -366,9 +486,10 @@ function populateRoleDropdowns() {
   });
 }
 
-/** Fill all permission <select> elements with current permissionsCache */
+/** Fill all permission <select> elements AND the checkbox list from permissionsCache */
 function populatePermDropdowns() {
-  ['policyPermSelect', 'checkPermSelect'].forEach(id => {
+  // Regular <select> dropdowns (access.html checkPermSelect)
+  ['checkPermSelect'].forEach(id => {
     const sel = document.getElementById(id);
     if (!sel) return;
     const val = sel.value;
@@ -376,8 +497,20 @@ function populatePermDropdowns() {
       permissionsCache.map(p => `<option value="${p.id}">${escHtml(p.name)}</option>`).join('');
     if (val) sel.value = val;
   });
+
+  // Checkbox list for policy.html multi-select
+  populatePermCheckboxList();
 }
 
+// ─────────────────────────────────────────────────────────────
+// DUPLICATE NAME CHECK
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Case-insensitive duplicate check against a cache array.
+ * Returns the existing entry if a match is found, otherwise null.
+ * e.g. "doctor", "Doctor", "DOCTOR" all match the same entry.
+ */
 function isDuplicateName(name, cache) {
   const normalized = name.trim().toLowerCase();
   return cache.find(item => item.name.trim().toLowerCase() === normalized) || null;
@@ -453,49 +586,250 @@ async function createPermission() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// POLICY MANAGEMENT  (roles.html — sub-section)
+// POLICY MANAGEMENT — MULTI-PERMISSION  (policy.html)
 // ─────────────────────────────────────────────────────────────
 
-/** Show a live preview of the role→permission policy being built */
-function updatePolicyPreview() {
-  const roleId  = document.getElementById('policyRoleSelect')?.value;
-  const permId  = document.getElementById('policyPermSelect')?.value;
-  const preview = document.getElementById('policyPreview');
-  if (!preview) return;
-  if (roleId && permId) {
-    const role = rolesCache.find(r => r.id.toString() === roleId);
-    const perm = permissionsCache.find(p => p.id.toString() === permId);
-    if (role && perm) {
-      setEl('previewRole', role.name);
-      setEl('previewPerm', perm.name);
-      preview.style.display = 'block';
-    }
-  } else { preview.style.display = 'none'; }
+/**
+ * Render the permission checkbox list inside #permCheckboxList.
+ * Called whenever permissionsCache is refreshed.
+ */
+function populatePermCheckboxList() {
+  const container  = document.getElementById('permCheckboxList');
+  const controls   = document.getElementById('permCheckboxControls');
+  if (!container) return;
+
+  if (permissionsCache.length === 0) {
+    container.innerHTML = `<div style="padding:1rem;text-align:center;color:var(--text-muted);font-size:.82rem;font-style:italic;"><i class="fa-solid fa-circle-info"></i> No permissions found. Create permissions first.</div>`;
+    if (controls) controls.style.display = 'none';
+    return;
+  }
+
+  container.innerHTML = permissionsCache.map(p => `
+    <label class="perm-checkbox-item" id="permCheck_${p.id}">
+      <input type="checkbox" value="${p.id}" onchange="onPermCheckChange()"/>
+      <div class="perm-check-icon"><i class="${permIcon(p.name)}"></i></div>
+      <span class="perm-check-name">${escHtml(p.name)}</span>
+      <span class="perm-check-id">#${p.id}</span>
+    </label>`).join('');
+
+  if (controls) controls.style.display = 'flex';
+  updatePermSelectedCount();
 }
 
+/** Returns array of selected permission IDs from the checkbox list */
+function getSelectedPermIds() {
+  const checkboxes = document.querySelectorAll('#permCheckboxList input[type="checkbox"]:checked');
+  return Array.from(checkboxes).map(cb => cb.value);
+}
+
+/** Called on every checkbox change — updates count badge and preview */
+function onPermCheckChange() {
+  // Update checked styling on the label
+  document.querySelectorAll('#permCheckboxList .perm-checkbox-item').forEach(label => {
+    label.classList.toggle('checked', label.querySelector('input').checked);
+  });
+  updatePermSelectedCount();
+  updatePolicyPreview();
+}
+
+/** Updates the "N selected" badge next to the label */
+function updatePermSelectedCount() {
+  const count  = getSelectedPermIds().length;
+  const badge  = document.getElementById('permSelectedCount');
+  if (!badge) return;
+  badge.style.display  = count > 0 ? 'inline' : 'none';
+  badge.textContent    = `${count} selected`;
+}
+
+/** Select all permission checkboxes */
+function selectAllPermissions() {
+  document.querySelectorAll('#permCheckboxList input[type="checkbox"]').forEach(cb => { cb.checked = true; });
+  onPermCheckChange();
+}
+
+/** Clear all permission checkboxes */
+function clearAllPermissions() {
+  document.querySelectorAll('#permCheckboxList input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+  onPermCheckChange();
+}
+
+/**
+ * Update the live policy preview panel showing:
+ *   RoleName → [Perm1] [Perm2] [Perm3]
+ */
+function updatePolicyPreview() {
+  const roleId   = document.getElementById('policyRoleSelect')?.value;
+  const permIds  = getSelectedPermIds();
+  const preview  = document.getElementById('policyPreview');
+  const content  = document.getElementById('previewContent');
+  if (!preview) return;
+
+  if (!roleId || permIds.length === 0) {
+    preview.style.display = 'none';
+    // Update button text
+    const btnText = document.getElementById('assignPermBtnText');
+    if (btnText) btnText.textContent = 'Assign Permissions to Role';
+    return;
+  }
+
+  const role  = rolesCache.find(r => r.id.toString() === roleId);
+  const perms = permIds.map(id => permissionsCache.find(p => p.id.toString() === id)).filter(Boolean);
+
+  if (role && perms.length > 0) {
+    const permTags = perms.map(p =>
+      `<span class="policy-perm" style="margin:.2rem .2rem;">${escHtml(p.name)}</span>`
+    ).join('');
+
+    if (content) {
+      content.innerHTML = `
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-bottom:.4rem;">
+          <span class="policy-role">${escHtml(role.name)}</span>
+          <i class="fa-solid fa-arrow-right" style="color:var(--text-muted);font-size:.8rem;"></i>
+          <div style="display:flex;flex-wrap:wrap;gap:.35rem;justify-content:center;">${permTags}</div>
+        </div>`;
+    }
+    preview.style.display = 'block';
+
+    // Update button text with count
+    const btnText = document.getElementById('assignPermBtnText');
+    if (btnText) btnText.textContent = `Assign ${perms.length} Permission${perms.length > 1 ? 's' : ''} to Role`;
+  }
+}
+
+/**
+ * Loop through all selected permissions and submit one blockchain
+ * transaction per permission (contract only accepts one at a time).
+ */
 async function assignPermissionToRole() {
   if (!contract) return requireWallet();
-  const roleId = document.getElementById('policyRoleSelect').value;
-  const permId = document.getElementById('policyPermSelect').value;
-  if (!roleId || !permId) { showToast('warning', 'Selection Required', 'Please select both a role and a permission.'); return; }
+
+  const roleId  = document.getElementById('policyRoleSelect').value;
+  const permIds = getSelectedPermIds();
+
+  if (!roleId)           { showToast('warning', 'Role Required',        'Please select a role.');                   return; }
+  if (permIds.length === 0) { showToast('warning', 'Permission Required', 'Please select at least one permission.'); return; }
+
   const roleName = rolesCache.find(r => r.id.toString() === roleId)?.name || roleId;
-  const permName = permissionsCache.find(p => p.id.toString() === permId)?.name || permId;
+  const perms    = permIds.map(id => permissionsCache.find(p => p.id.toString() === id)).filter(Boolean);
+
+  let successCount = 0;
+  let failCount    = 0;
+
+  setBtnLoading('assignPermBtn', true);
+  showToast('info', 'Processing Policies', `Assigning ${perms.length} permission(s) to "${roleName}"...`);
+
+  // Issue 5 Fix: use assignMultiplePermissionsToRole() — ONE transaction for all
   try {
-    setBtnLoading('assignPermBtn', true);
-    showToast('info', 'Transaction Pending', `Assigning "${permName}" → "${roleName}"...`);
-    const tx = await sendTx(() => contract.assignPermissionToRole(BigInt(roleId), BigInt(permId), AMOY_GAS));
+    const permIdsBigInt = perms.map(p => BigInt(p.id));
+    showToast('info', 'Transaction Pending',
+      `Assigning ${perms.length} permission(s) to "${roleName}".`);
+    const tx = await sendTx(() =>
+      contract.assignMultiplePermissionsToRole(BigInt(roleId), permIdsBigInt, AMOY_GAS)
+    );
     showToast('info', 'Awaiting Confirmation', `Tx: ${shortAddr(tx.hash)}`);
     await tx.wait();
-    document.getElementById('policyRoleSelect').value = '';
-    document.getElementById('policyPermSelect').value = '';
-    const preview = document.getElementById('policyPreview');
-    if (preview) preview.style.display = 'none';
-    showToast('success', 'Policy Assigned', `"${permName}" assigned to "${roleName}".`);
-    addLog('permission', `Policy: <strong>${escHtml(permName)}</strong> → <strong>${escHtml(roleName)}</strong>`);
+    successCount = perms.length;
+    perms.forEach(p => {
+      addLog('permission', `Policy: <strong>${escHtml(p.name)}</strong> → <strong>${escHtml(roleName)}</strong>`);
+    });
+    showToast('success', 'All Policies Assigned',
+      `${successCount} permission(s) assigned to "${roleName}".`);
   } catch (err) {
-    console.error('assignPermissionToRole:', err);
+    failCount = perms.length;
+    console.error('assignMultiplePermissionsToRole:', err);
     showToast('error', 'Transaction Failed', parseContractError(err));
-  } finally { setBtnLoading('assignPermBtn', false); }
+  }
+
+  // Reset form
+  document.getElementById('policyRoleSelect').value = '';
+  clearAllPermissions();
+  const preview = document.getElementById('policyPreview');
+  if (preview) preview.style.display = 'none';
+  const btnText = document.getElementById('assignPermBtnText');
+  if (btnText) btnText.textContent = 'Assign Permissions to Role';
+
+  setBtnLoading('assignPermBtn', false);
+}
+
+
+// ─────────────────────────────────────────────────────────────
+// ROLE & PERMISSION DEACTIVATION  (Issue 4 — roles.html / permissions.html)
+// ─────────────────────────────────────────────────────────────
+
+async function deactivateRole(roleId, roleName) {
+  if (!contract) return requireWallet();
+  if (!confirm(`Deactivate role "${roleName}"?\n\nStaff with this role will lose access until reactivated.`)) return;
+  try {
+    setBtnLoading('createRoleBtn', true);
+    showToast('info', 'Transaction Pending', `Deactivating role "${roleName}"...`);
+    const tx = await sendTx(() => contract.deactivateRole(BigInt(roleId), AMOY_GAS));
+    showToast('info', 'Awaiting Confirmation', `Tx: ${shortAddr(tx.hash)}`);
+    await tx.wait();
+    await loadRoles();
+    renderRolesTable();
+    populateRoleDropdowns();
+    showToast('warning', 'Role Deactivated', `"${roleName}" has been deactivated.`);
+    addLog('role', `Role Deactivated: <strong>${escHtml(roleName)}</strong>`);
+  } catch (err) {
+    console.error('deactivateRole:', err);
+    showToast('error', 'Transaction Failed', parseContractError(err));
+  } finally { setBtnLoading('createRoleBtn', false); }
+}
+
+async function reactivateRole(roleId, roleName) {
+  if (!contract) return requireWallet();
+  try {
+    setBtnLoading('createRoleBtn', true);
+    showToast('info', 'Transaction Pending', `Reactivating role "${roleName}"...`);
+    const tx = await sendTx(() => contract.reactivateRole(BigInt(roleId), AMOY_GAS));
+    showToast('info', 'Awaiting Confirmation', `Tx: ${shortAddr(tx.hash)}`);
+    await tx.wait();
+    await loadRoles();
+    renderRolesTable();
+    populateRoleDropdowns();
+    showToast('success', 'Role Reactivated', `"${roleName}" is now active again.`);
+    addLog('role', `Role Reactivated: <strong>${escHtml(roleName)}</strong>`);
+  } catch (err) {
+    console.error('reactivateRole:', err);
+    showToast('error', 'Transaction Failed', parseContractError(err));
+  } finally { setBtnLoading('createRoleBtn', false); }
+}
+
+async function deactivatePermission(permId, permName) {
+  if (!contract) return requireWallet();
+  if (!confirm(`Deactivate permission "${permName}"?\n\nNo user will be granted this permission until reactivated.`)) return;
+  try {
+    setBtnLoading('createPermBtn', true);
+    showToast('info', 'Transaction Pending', `Deactivating permission "${permName}"...`);
+    const tx = await sendTx(() => contract.deactivatePermission(BigInt(permId), AMOY_GAS));
+    showToast('info', 'Awaiting Confirmation', `Tx: ${shortAddr(tx.hash)}`);
+    await tx.wait();
+    await loadPermissions();
+    renderPermsTable();
+    showToast('warning', 'Permission Deactivated', `"${permName}" has been deactivated.`);
+    addLog('permission', `Permission Deactivated: <strong>${escHtml(permName)}</strong>`);
+  } catch (err) {
+    console.error('deactivatePermission:', err);
+    showToast('error', 'Transaction Failed', parseContractError(err));
+  } finally { setBtnLoading('createPermBtn', false); }
+}
+
+async function reactivatePermission(permId, permName) {
+  if (!contract) return requireWallet();
+  try {
+    setBtnLoading('createPermBtn', true);
+    showToast('info', 'Transaction Pending', `Reactivating permission "${permName}"...`);
+    const tx = await sendTx(() => contract.reactivatePermission(BigInt(permId), AMOY_GAS));
+    showToast('info', 'Awaiting Confirmation', `Tx: ${shortAddr(tx.hash)}`);
+    await tx.wait();
+    await loadPermissions();
+    renderPermsTable();
+    showToast('success', 'Permission Reactivated', `"${permName}" is now active again.`);
+    addLog('permission', `Permission Reactivated: <strong>${escHtml(permName)}</strong>`);
+  } catch (err) {
+    console.error('reactivatePermission:', err);
+    showToast('error', 'Transaction Failed', parseContractError(err));
+  } finally { setBtnLoading('createPermBtn', false); }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -647,16 +981,33 @@ function listenToEvents() {
     incStaffCount();
     addLog('staff',    `Role Assigned: <strong>${escHtml(rName)}</strong> → ${shortAddr(user)}`, user);
   });
-  contract.on('UserSuspended', (user)          => addLog('suspend',   `Staff Suspended: ${shortAddr(user)}`, user));
-  contract.on('UserRevoked',   (user)          => addLog('revoke',    `Staff Revoked: ${shortAddr(user)}`, user));
-  contract.on('UserActivated', (user)          => addLog('activate',  `Staff Activated: ${shortAddr(user)}`, user));
-  contract.on('AccessGranted', (user, _, pId)  => {
+  contract.on('UserSuspended',        (user)               => addLog('suspend',   `Staff Suspended: ${shortAddr(user)}`, user));
+  contract.on('UserRevoked',          (user)               => addLog('revoke',    `Staff Revoked: ${shortAddr(user)}`, user));
+  contract.on('UserActivated',        (user)               => addLog('activate',  `Staff Activated: ${shortAddr(user)}`, user));
+  contract.on('AccessGranted',        (user, _, pId)       => {
     const pName = permissionsCache.find(p => p.id === pId)?.name || `Perm #${pId}`;
     addLog('access-ok', `Access Granted: ${shortAddr(user)} → <strong>${escHtml(pName)}</strong>`, user);
   });
-  contract.on('AccessDenied',  (user, _, pId)  => {
+  contract.on('AccessDenied',         (user, _, pId)       => {
     const pName = permissionsCache.find(p => p.id === pId)?.name || `Perm #${pId}`;
     addLog('access-no', `Access Denied: ${shortAddr(user)} → <strong>${escHtml(pName)}</strong>`, user);
+  });
+  // Issue 4: new events
+  contract.on('RoleDeactivated',       (roleId, name)       => {
+    loadRoles().then(() => { renderRolesTable(); populateRoleDropdowns(); });
+    addLog('role', `Role Deactivated: <strong>${escHtml(name)}</strong> (ID: ${roleId})`);
+  });
+  contract.on('RoleReactivated',       (roleId, name)       => {
+    loadRoles().then(() => { renderRolesTable(); populateRoleDropdowns(); });
+    addLog('role', `Role Reactivated: <strong>${escHtml(name)}</strong> (ID: ${roleId})`);
+  });
+  contract.on('PermissionDeactivated', (permissionId, name) => {
+    loadPermissions().then(() => { renderPermsTable(); });
+    addLog('permission', `Permission Deactivated: <strong>${escHtml(name)}</strong> (ID: ${permissionId})`);
+  });
+  contract.on('PermissionReactivated', (permissionId, name) => {
+    loadPermissions().then(() => { renderPermsTable(); });
+    addLog('permission', `Permission Reactivated: <strong>${escHtml(name)}</strong> (ID: ${permissionId})`);
   });
 }
 
@@ -915,10 +1266,13 @@ document.querySelectorAll('.nav-link').forEach(l => l.addEventListener('click', 
 // INIT  — runs on every page load
 // ─────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
-  // 1. Highlight correct nav link
+  // 1. Clear stale logs if contract address has changed (new deployment)
+  clearStaleLogsIfContractChanged();
+
+  // 2. Highlight correct nav link
   setActiveNavLink();
 
-  // 2. Logs page: always render from localStorage immediately (no wallet needed)
+  // 3. Logs page: always render from localStorage immediately (no wallet needed)
   if (currentPage() === 'logs') renderLogs();
 
   // 3. Try silent auto-reconnect (no MetaMask popup)
