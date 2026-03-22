@@ -142,6 +142,28 @@
           <p>Activity entries from all pages appear here automatically. Connect your wallet and start using the system to see events.</p>
         </div>
         <div class="timeline" id="timeline"></div>
+
+        <!-- Pagination Bar -->
+        <div id="paginationBar" style="display:none; align-items:center; justify-content:space-between; padding:.85rem 1.5rem; border-top:1px solid var(--border-light); gap:1rem; flex-wrap:wrap;">
+          <span id="paginationInfo" style="font-size:.78rem; color:var(--text-muted); font-family:'Plus Jakarta Sans',sans-serif;">
+            Showing <strong id="pgFrom">1</strong>–<strong id="pgTo">20</strong> of <strong id="pgTotal">0</strong> events
+          </span>
+          <div style="display:flex; align-items:center; gap:.5rem;">
+            <button id="pgPrev" onclick="changePage(-1)"
+              style="display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .85rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:white;font-size:.8rem;font-weight:600;color:var(--text-secondary);cursor:pointer;transition:all .2s;font-family:'Plus Jakarta Sans',sans-serif;"
+              onmouseover="this.style.borderColor='var(--primary-light)';this.style.color='var(--primary)'"
+              onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">
+              <i class="fa-solid fa-chevron-left"></i> Prev
+            </button>
+            <span id="pgIndicator" style="font-size:.78rem;font-weight:700;color:var(--text-primary);padding:0 .25rem;"></span>
+            <button id="pgNext" onclick="changePage(1)"
+              style="display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .85rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:white;font-size:.8rem;font-weight:600;color:var(--text-secondary);cursor:pointer;transition:all .2s;font-family:'Plus Jakarta Sans',sans-serif;"
+              onmouseover="this.style.borderColor='var(--primary-light)';this.style.color='var(--primary)'"
+              onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">
+              Next <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
       </div>
 
     </div><!-- /page-body -->

@@ -1,19 +1,6 @@
-/* ═══════════════════════════════════════════════════════════════
-   HOSPITAL RBAC DASHBOARD — app.js (Shared across all pages)
-   Network : Polygon Amoy Testnet (Chain ID: 80002)
-   Contract: 0xc1161F9d7F04576aD207a79d5Fa25e62fAa2FE80
-   Library : ethers.js v6
-   Strategy: Page detection via body[data-page], localStorage
-             used to persist logs and staff count across pages.
-═══════════════════════════════════════════════════════════════ */
-
-// ─────────────────────────────────────────────────────────────
-// CONTRACT CONFIGURATION
-// ─────────────────────────────────────────────────────────────
 const CONTRACT_ADDRESS       = "0xc1161F9d7F04576aD207a79d5Fa25e62fAa2FE80";
 const POLYGON_AMOY_RPC_PRIMARY = "https://polygon-amoy-bor-rpc.publicnode.com"; // primary — PublicNode (no API key, highly reliable)
 
-/** Small delay between sequential RPC calls to avoid rate-limiting the public node */
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const RPC_DELAY_MS = 120; // 120 ms gap between each roles(i)/permissions(i) loop call
 const POLYGON_AMOY_CHAIN_ID  = 80002;
@@ -55,39 +42,11 @@ const CONTRACT_ABI = [
   { "inputs": [{ "internalType": "address",   "name": "",              "type": "address"   }], "name": "users", "outputs": [{ "internalType": "uint256", "name": "roleId", "type": "uint256" }, { "internalType": "enum RBAC.UserStatus", "name": "status", "type": "uint8" }], "stateMutability": "view", "type": "function" }
 ];
 
-// ─────────────────────────────────────────────────────────────
-// GAS CONFIGURATION  (Polygon Amoy Testnet)
-//
-// Root causes of "gas tip cap below minimum" errors:
-//   1. ethers.js v6 auto-estimation returns values below Amoy's
-//      minimum (~25 Gwei maxPriorityFeePerGas).
-//   2. Calling provider.getFeeData() on the public Amoy RPC often
-//      triggers rate-limiting ("Transaction NaN - rate limited"),
-//      which causes the dynamic fetch to fail unpredictably.
-//
-// Solution: Use a STATIC gas config — no network call needed.
-//   50 Gwei tip and 60 Gwei cap are well above Amoy's minimum
-//   and low enough to never waste significant test MATIC.
-// ─────────────────────────────────────────────────────────────
-
-/** Static gas overrides — safe for every write tx on Polygon Amoy */
 const AMOY_GAS = {
   maxPriorityFeePerGas: ethers.parseUnits('50', 'gwei'), // tip:  50 Gwei  (min ~25 Gwei)
   maxFeePerGas:         ethers.parseUnits('60', 'gwei'), // cap:  60 Gwei  (tip + base fee)
 };
 
-/**
- * sendTx(fn) — Wraps every contract write call with:
- *   • Static AMOY_GAS overrides (no getFeeData() = no rate-limit risk)
- *   • Auto-retry up to 3 times on rate-limit errors (code -32005 / -32603)
- *   • 1.5 s back-off delay between retries
- *
- * Usage:  const tx = await sendTx(() => contract.createRole(name));
- */
-/**
- * Brief pause before sending — lets any in-flight page-load RPC calls
- * finish so we do not pile write + read calls on the RPC at the same time.
- */
 async function sendTx(fn, retries = 3) {
   await sleep(300); // small pre-tx breathing room
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -116,9 +75,6 @@ async function sendTx(fn, retries = 3) {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// APP STATE
-// ─────────────────────────────────────────────────────────────
 let provider         = null;
 let signer           = null;
 let contract         = null;   // read + write (needs signer)
@@ -129,11 +85,6 @@ let connectedAccount = null;
 let rolesCache       = [];  // [{ id: BigInt, name: string }]
 let permissionsCache = [];  // [{ id: BigInt, name: string }]
 
-// ─────────────────────────────────────────────────────────────
-// PERSISTENCE HELPERS  (localStorage)
-// ─────────────────────────────────────────────────────────────
-
-/** Save a log entry to localStorage (persists across page navigations) */
 function saveLog(entry) {
   try {
     let logs = getStoredLogs();
@@ -143,19 +94,11 @@ function saveLog(entry) {
   } catch (e) { console.warn('Log save failed:', e); }
 }
 
-/** Read all stored log entries from localStorage */
 function getStoredLogs() {
   try { return JSON.parse(localStorage.getItem('rbac_logs') || '[]'); }
   catch { return []; }
 }
 
-/**
- * Check if the stored logs belong to the current contract.
- * Clears stale logs in TWO cases:
- *   1. A different contract address was stored (redeployment)
- *   2. No address was ever stored (first run of this version — old logs
- *      may exist from before this check was introduced)
- */
 function clearStaleLogsIfContractChanged() {
   try {
     const storedAddr = localStorage.getItem('rbac_contract_addr');
@@ -174,18 +117,12 @@ function clearStaleLogsIfContractChanged() {
 
 
 
-/** Get / increment the tracked staff count */
 function getStaffCount()  { return parseInt(localStorage.getItem('rbac_staff_count') || '0'); }
 function incStaffCount()  { const c = getStaffCount() + 1; localStorage.setItem('rbac_staff_count', c); return c; }
 
-// ─────────────────────────────────────────────────────────────
-// WALLET CONNECTION  (shared — runs on every page)
-// ─────────────────────────────────────────────────────────────
-
-/** Connect MetaMask, enforce Polygon Amoy, initialize contract instances */
 async function connectWallet() {
   if (!window.ethereum) {
-    showToast('error', 'MetaMask Required', 'Please install MetaMask to continue.');
+    window.open('https://metamask.io/download', '_blank');
     return;
   }
   try {
@@ -262,11 +199,6 @@ if (window.ethereum) {
   window.ethereum.on('chainChanged', () => location.reload());
 }
 
-// ─────────────────────────────────────────────────────────────
-// PAGE DETECTION  — decide what to load based on current page
-// ─────────────────────────────────────────────────────────────
-
-/** Returns the current page identifier from <body data-page="..."> */
 function currentPage() {
   return document.body.getAttribute('data-page') || 'dashboard';
 }
@@ -722,7 +654,7 @@ async function assignPermissionToRole() {
   try {
     const permIdsBigInt = perms.map(p => BigInt(p.id));
     showToast('info', 'Transaction Pending',
-      `Assigning ${perms.length} permission(s) to "${roleName}".`);
+      `Assigning ${perms.length} permission(s) to "${roleName}" in one transaction...`);
     const tx = await sendTx(() =>
       contract.assignMultiplePermissionsToRole(BigInt(roleId), permIdsBigInt, AMOY_GAS)
     );
@@ -733,7 +665,7 @@ async function assignPermissionToRole() {
       addLog('permission', `Policy: <strong>${escHtml(p.name)}</strong> → <strong>${escHtml(roleName)}</strong>`);
     });
     showToast('success', 'All Policies Assigned',
-      `${successCount} permission(s) assigned to "${roleName}".`);
+      `${successCount} permission(s) assigned to "${roleName}" in one transaction.`);
   } catch (err) {
     failCount = perms.length;
     console.error('assignMultiplePermissionsToRole:', err);
@@ -1020,30 +952,55 @@ function listenToEvents() {
  * even after navigating from another page.
  */
 function addLog(type, message, addr = null) {
-  const entry = { type, message, addr, time: new Date().toLocaleTimeString(), date: new Date().toLocaleDateString() };
+  const now  = new Date();
+  const dd   = String(now.getDate()).padStart(2, '0');
+  const mm   = String(now.getMonth() + 1).padStart(2, '0');
+  const yyyy = now.getFullYear();
+  const entry = { type, message, addr, time: now.toLocaleTimeString(), date: `${dd}/${mm}/${yyyy}` };
   saveLog(entry);
   // If currently on logs page, re-render immediately
   if (currentPage() === 'logs') renderLogs();
 }
 
-/** Render timeline from localStorage, then re-apply both active filters */
-function renderLogs() {
+// ─────────────────────────────────────────────────────────────
+// PAGINATION STATE
+// ─────────────────────────────────────────────────────────────
+const LOGS_PER_PAGE = 20;
+let currentLogPage  = 1;  // 1-indexed
+
+/**
+ * Core render — takes the FULL filtered entry list, slices the
+ * correct page of 20, renders those rows, and updates the
+ * pagination bar.
+ */
+function renderLogsPage(filteredEntries) {
   const timeline = document.getElementById('timeline');
   const emptyEl  = document.getElementById('logsEmpty');
+  const pgBar    = document.getElementById('paginationBar');
   if (!timeline) return;
 
-  const entries = getStoredLogs();
-
-  if (entries.length === 0) {
+  if (filteredEntries.length === 0) {
     if (emptyEl) emptyEl.style.display = 'flex';
     timeline.innerHTML = '';
-    updateWalletFilterBadge(0, false);
+    if (pgBar) pgBar.style.display = 'none';
+    updateWalletFilterBadge(0, document.getElementById('walletFilterInput')?.value?.trim() !== '');
     return;
   }
+
   if (emptyEl) emptyEl.style.display = 'none';
 
-  // Each item stores full address in data-addr for wallet filtering
-  timeline.innerHTML = entries.map(e => `
+  const totalPages = Math.ceil(filteredEntries.length / LOGS_PER_PAGE);
+
+  // Clamp currentLogPage within valid range
+  if (currentLogPage < 1)           currentLogPage = 1;
+  if (currentLogPage > totalPages)  currentLogPage = totalPages;
+
+  const start   = (currentLogPage - 1) * LOGS_PER_PAGE;
+  const end     = Math.min(start + LOGS_PER_PAGE, filteredEntries.length);
+  const pageEntries = filteredEntries.slice(start, end);
+
+  // Render only this page's entries
+  timeline.innerHTML = pageEntries.map(e => `
     <div class="timeline-item" data-category="${logCategory(e.type)}" data-addr="${(e.addr || '').toLowerCase()}">
       <div class="timeline-icon ${logIconClass(e.type)}"><i class="${logIconName(e.type)}"></i></div>
       <div class="timeline-body">
@@ -1053,47 +1010,74 @@ function renderLogs() {
       <div class="timeline-time">${e.time}<br><span style="font-size:.62rem;opacity:.6">${e.date}</span></div>
     </div>`).join('');
 
-  // Re-apply both filters after render
+  // Update pagination bar
+  if (pgBar) {
+    pgBar.style.display = 'flex';
+    setEl('pgFrom',      start + 1);
+    setEl('pgTo',        end);
+    setEl('pgTotal',     filteredEntries.length);
+    setEl('pgIndicator', `${currentLogPage} / ${totalPages}`);
+
+    // Disable Prev/Next when at boundaries
+    const prev = document.getElementById('pgPrev');
+    const next = document.getElementById('pgNext');
+    if (prev) { prev.disabled = currentLogPage === 1;          prev.style.opacity = currentLogPage === 1          ? '.4' : '1'; }
+    if (next) { next.disabled = currentLogPage === totalPages; next.style.opacity = currentLogPage === totalPages ? '.4' : '1'; }
+  }
+
+  // Update wallet filter badge with total filtered count
+  const walletRaw = document.getElementById('walletFilterInput')?.value?.trim() || '';
+  updateWalletFilterBadge(filteredEntries.length, walletRaw !== '');
+}
+
+/** Re-render logs from localStorage (called on page load and after new log added) */
+function renderLogs() {
+  currentLogPage = 1; // always reset to page 1 on full re-render
   applyAllFilters();
 }
 
-/** Category tab filter — re-applies wallet filter on top */
+/** Handle Prev / Next button clicks */
+function changePage(direction) {
+  currentLogPage += direction;
+  applyAllFilters();
+  // Scroll to top of logs container
+  document.getElementById('timeline')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/** Category tab filter — reset to page 1 and re-apply */
 function filterLogs(category, btn) {
   document.querySelectorAll('.log-filter').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  currentLogPage = 1;
   applyAllFilters();
 }
 
 /**
- * Master filter function — applies BOTH the category tab AND the
- * wallet address search simultaneously. An item is visible only
- * when it passes BOTH filters.
+ * Master filter — applies category + wallet search, then passes
+ * the matching entries to renderLogsPage() for pagination.
  */
 function applyAllFilters() {
   // Get active category
-  const activeBtn  = document.querySelector('.log-filter.active');
-  const m          = activeBtn?.getAttribute('onclick')?.match(/'([^']+)'/);
-  const category   = m ? m[1] : 'all';
+  const activeBtn = document.querySelector('.log-filter.active');
+  const m         = activeBtn?.getAttribute('onclick')?.match(/'([^']+)'/);
+  const category  = m ? m[1] : 'all';
 
-  // Get wallet filter value (lowercase, trimmed)
-  const walletRaw  = document.getElementById('walletFilterInput')?.value?.trim() || '';
-  const wallet     = walletRaw.toLowerCase();
+  // Get wallet filter value
+  const walletRaw = document.getElementById('walletFilterInput')?.value?.trim() || '';
+  const wallet    = walletRaw.toLowerCase();
 
-  let visibleCount = 0;
-
-  document.querySelectorAll('.timeline-item').forEach(item => {
-    const catMatch    = category === 'all' || item.dataset.category === category;
-    const addrMatch   = wallet === '' || item.dataset.addr.includes(wallet);
-    const visible     = catMatch && addrMatch;
-    item.classList.toggle('hidden', !visible);
-    if (visible) visibleCount++;
+  // Filter from ALL stored entries (not just DOM elements)
+  const allEntries     = getStoredLogs();
+  const filteredEntries = allEntries.filter(e => {
+    const catMatch  = category === 'all' || logCategory(e.type) === category;
+    const addrMatch = wallet === '' || (e.addr || '').toLowerCase().includes(wallet);
+    return catMatch && addrMatch;
   });
 
-  // Show/hide result count badge
-  updateWalletFilterBadge(visibleCount, wallet !== '');
+  renderLogsPage(filteredEntries);
 }
 
-// Keep old name as alias so existing callers still work
+// Keep alias so existing callers still work
 function applyLogFilter(category) { applyAllFilters(); }
 
 // ─────────────────────────────────────────────────────────────
@@ -1102,13 +1086,11 @@ function applyLogFilter(category) { applyAllFilters(); }
 
 /** Fired on every keystroke in the wallet filter input */
 function filterLogsByWallet() {
-  const input     = document.getElementById('walletFilterInput');
-  const clearBtn  = document.getElementById('walletFilterClear');
-  const hasValue  = input?.value?.trim().length > 0;
-
-  // Show/hide the × clear button
+  const input    = document.getElementById('walletFilterInput');
+  const clearBtn = document.getElementById('walletFilterClear');
+  const hasValue = input?.value?.trim().length > 0;
   if (clearBtn) clearBtn.style.display = hasValue ? 'block' : 'none';
-
+  currentLogPage = 1; // reset to page 1 on new search
   applyAllFilters();
 }
 
