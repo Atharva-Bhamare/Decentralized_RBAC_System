@@ -1,4 +1,4 @@
-const CONTRACT_ADDRESS       = "0xc1161F9d7F04576aD207a79d5Fa25e62fAa2FE80";
+const CONTRACT_ADDRESS       = "0x04f8617a5058605185f8e30337718103807691c5";
 const POLYGON_AMOY_RPC_PRIMARY = "https://polygon-amoy-bor-rpc.publicnode.com"; // primary — PublicNode (no API key, highly reliable)
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
