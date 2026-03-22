@@ -155,6 +155,75 @@
         </div>
       </div>
 
+      <!-- ── HOW IT WORKS ── -->
+      <div style="margin-top:2rem;">
+        <div style="margin-bottom:1.25rem;">
+          <div class="section-tag" style="margin-bottom:.5rem;">Quick Guide</div>
+          <h2 class="section-title">How It Works</h2>
+          <p class="section-desc">Follow these 5 steps to set up your hospital RBAC system from scratch.</p>
+        </div>
+
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);overflow:hidden;">
+
+          <!-- Step 1 -->
+          <div class="dash-step">
+            <div class="dash-step-num">1</div>
+            <div class="dash-step-body">
+              <strong>Create Roles</strong> — Go to the
+              <a href="roles.html" class="dash-step-link">Roles page</a>
+              and define hospital roles like Doctor, Nurse, or Pharmacist.
+            </div>
+            <a href="roles.html" class="dash-step-arrow"><i class="fa-solid fa-arrow-right"></i></a>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="dash-step">
+            <div class="dash-step-num">2</div>
+            <div class="dash-step-body">
+              <strong>Create Permissions</strong> — Go to the
+              <a href="permissions.html" class="dash-step-link">Permissions page</a>
+              and define resource actions like "View Patient Records" or "Issue Prescription".
+            </div>
+            <a href="permissions.html" class="dash-step-arrow"><i class="fa-solid fa-arrow-right"></i></a>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="dash-step">
+            <div class="dash-step-num">3</div>
+            <div class="dash-step-body">
+              <strong>Assign Policy</strong> — Go to the
+              <a href="policy.html" class="dash-step-link">Policy page</a>
+              and link permissions to roles on-chain via
+              <code style="font-family:'JetBrains Mono',monospace;font-size:.75rem;background:var(--purple-bg);color:var(--purple);padding:.1rem .4rem;border-radius:4px;">assignMultiplePermissionsToRole()</code>.
+            </div>
+            <a href="policy.html" class="dash-step-arrow"><i class="fa-solid fa-arrow-right"></i></a>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="dash-step">
+            <div class="dash-step-num">4</div>
+            <div class="dash-step-body">
+              <strong>Assign Staff</strong> — Go to the
+              <a href="staff.html" class="dash-step-link">Staff page</a>
+              to assign a staff wallet to a role — they inherit all its permissions automatically.
+            </div>
+            <a href="staff.html" class="dash-step-arrow"><i class="fa-solid fa-arrow-right"></i></a>
+          </div>
+
+          <!-- Step 5 -->
+          <div class="dash-step" style="border-bottom:none;">
+            <div class="dash-step-num">5</div>
+            <div class="dash-step-body">
+              <strong>Verify Access</strong> — Go to the
+              <a href="access.html" class="dash-step-link">Access Control page</a>
+              to verify any staff member's permissions on-chain at any time.
+            </div>
+            <a href="access.html" class="dash-step-arrow"><i class="fa-solid fa-arrow-right"></i></a>
+          </div>
+
+        </div>
+      </div>
+
     </div><!-- /page-body -->
   </main>
 
